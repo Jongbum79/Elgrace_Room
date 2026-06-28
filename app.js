@@ -1115,7 +1115,7 @@ function checkLogin() {
       if (!KAKAO_APP_KEY) reason += "[키 없음] ";
       if (!window.Kakao) reason += "[Kakao SDK 차단/미로드] ";
       console.warn("checkLogin fallback: " + reason);
-      openMockLoginModal();
+      openMockLoginModal(reason);
     }
     return false;
   }
@@ -1123,10 +1123,22 @@ function checkLogin() {
 }
 
 // 모의 로그인 모달 관리
-function openMockLoginModal() {
+function openMockLoginModal(reason = "") {
   const modal = document.getElementById("mock-login-modal");
   const nicknameInput = document.getElementById("mock-nickname");
   nicknameInput.value = "";
+  
+  // 디버그 문구 노출
+  const debugText = document.getElementById("mock-login-debug-reason");
+  if (debugText) {
+    if (reason) {
+      debugText.textContent = `실시간 카카오 로그인 제한 사유: ${reason}`;
+      debugText.style.display = "block";
+    } else {
+      debugText.style.display = "none";
+    }
+  }
+  
   modal.classList.remove("hidden");
 }
 
@@ -1185,7 +1197,7 @@ function setupEventListeners() {
       if (!KAKAO_APP_KEY) reason += "[키 없음] ";
       if (!window.Kakao) reason += "[Kakao SDK 차단/미로드] ";
       showToast("모의 로그인 대체 사유: " + reason);
-      openMockLoginModal();
+      openMockLoginModal(reason);
     }
   });
   

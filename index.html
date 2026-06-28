@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
   
   <!-- CSS Stylesheet -->
-  <link rel="stylesheet" href="./styles.css?v=1.3">
+  <link rel="stylesheet" href="./styles.css?v=1.4">
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -213,6 +213,8 @@
           <input type="text" id="mock-nickname" placeholder="이름 또는 닉네임을 입력하세요 (예: 홍길동)" 
                  class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-600">
         </div>
+        <!-- Debug Reason -->
+        <p id="mock-login-debug-reason" class="text-xs text-red-600 font-bold mt-2" style="display: none;"></p>
       </div>
       <div class="modal-actions flex gap-2 mt-6">
         <button id="mock-login-cancel" class="btn-secondary flex-1 py-2 text-sm rounded-lg">취소</button>
@@ -328,6 +330,6 @@
   <div id="toast" class="toast">알림 메시지</div>
 
   <!-- Main JavaScript App -->
-  <script src="./app.js?v=1.3"></script>
+  <script src="./app.js?v=1.4"></script>
 </body>
 </html>
