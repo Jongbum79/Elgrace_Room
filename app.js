@@ -231,30 +231,41 @@ function updateAuthWidget(isLoggedIn) {
 function handleRealKakaoLogin() {
   if (!window.Kakao) return;
   
-  window.Kakao.Auth.login({
-    success: function(authObj) {
-      window.Kakao.API.request({
-        url: '/v2/user/me',
-        success: function(res) {
-          const kakaoAccount = res.kakao_account;
-          const user = {
-            id: `kakao_${res.id}`,
-            nickname: kakaoAccount.profile.nickname,
-            profile_image: kakaoAccount.profile.profile_image_url
-          };
-          saveUserSession(user);
-        },
-        fail: function(err) {
-          console.error("Kakao 프로필 페치 에러:", err);
-          showToast("카카오 사용자 정보를 가져오지 못했습니다.");
-        }
-      });
-    },
-    fail: function(err) {
-      console.error("Kakao Auth 에러:", err);
-      showToast("카카오 로그인을 완료하지 못했습니다.");
+  try {
+    // 초기화가 안 되었을 경우 초기화 실행
+    if (!window.Kakao.isInitialized()) {
+      window.Kakao.init(KAKAO_APP_KEY);
     }
-  });
+    
+    window.Kakao.Auth.login({
+      success: function(authObj) {
+        window.Kakao.API.request({
+          url: '/v2/user/me',
+          success: function(res) {
+            const kakaoAccount = res.kakao_account;
+            const user = {
+              id: `kakao_${res.id}`,
+              nickname: kakaoAccount.profile.nickname,
+              profile_image: kakaoAccount.profile.profile_image_url
+            };
+            saveUserSession(user);
+          },
+          fail: function(err) {
+            console.error("Kakao 프로필 페치 에러:", err);
+            showToast("카카오 사용자 정보를 가져오지 못했습니다.");
+          }
+        });
+      },
+      fail: function(err) {
+        console.error("Kakao Auth 에러:", err);
+        showToast("카카오 로그인을 완료하지 못했습니다.");
+      }
+    });
+  } catch (e) {
+    console.error("Kakao login runtime error:", e);
+    showToast("카카오 로그인 실행 오류: " + e.message);
+    openMockLoginModal("런타임 에러 - " + e.message);
+  }
 }
 
 // 5. 달력 렌더링 엔진 (일요일 시작)
