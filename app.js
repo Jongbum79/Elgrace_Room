@@ -1098,6 +1098,9 @@ function renderAll() {
   renderCalendar();
   renderRoomLayout();
   renderTimelineMatrix();
+  if (window.lucide) {
+    window.lucide.createIcons();
+  }
 }
 
 function checkLogin() {
