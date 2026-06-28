@@ -841,6 +841,7 @@ let isTimelineDragging = false;
 let dragStartSlotIdx = -1;
 let dragEndSlotIdx = -1;
 let dragRoomId = "";
+const TIMELINE_TOUCH_Y_TOLERANCE = 36;
 
 function renderTimelineMatrix() {
   const table = document.getElementById("timeline-matrix-table");
@@ -938,21 +939,7 @@ function renderTimelineMatrix() {
       } else {
         // 드래그를 통한 시간 선택 예약 기능
         tdCell.addEventListener("mousedown", (e) => {
-          if (!checkLogin()) return;
-          
-          const datePolicy = checkDateReservationAllowed(selectedDateStr);
-          if (!datePolicy.allowed) {
-            showToast(datePolicy.message || "지난 날짜는 예약할 수 없습니다.");
-            return;
-          }
-          
-          isTimelineDragging = true;
-          dragRoomId = room.id;
-          dragStartSlotIdx = idx;
-          dragEndSlotIdx = idx;
-          
-          // 즉시 대시선 선택 바 그리기
-          highlightTimelineDragSelection(room.id);
+          beginTimelineDragSelection(room.id, idx);
           e.preventDefault();
         });
         
@@ -971,6 +958,15 @@ function renderTimelineMatrix() {
             highlightTimelineDragSelection(room.id);
           }
         });
+        
+        tdCell.addEventListener("touchstart", (e) => {
+          beginTimelineDragSelection(room.id, idx);
+          e.preventDefault();
+        }, { passive: false });
+        
+        tdCell.addEventListener("touchmove", (e) => {
+          updateTimelineDragSelectionFromTouch(e);
+        }, { passive: false });
       }
       
       row.appendChild(tdCell);
@@ -980,6 +976,59 @@ function renderTimelineMatrix() {
   });
   
   table.appendChild(tbody);
+}
+
+function beginTimelineDragSelection(roomId, slotIdx) {
+  if (!checkLogin()) return false;
+  
+  const datePolicy = checkDateReservationAllowed(selectedDateStr);
+  if (!datePolicy.allowed) {
+    showToast(datePolicy.message || "지난 날짜는 예약할 수 없습니다.");
+    return false;
+  }
+  
+  isTimelineDragging = true;
+  dragRoomId = roomId;
+  dragStartSlotIdx = slotIdx;
+  dragEndSlotIdx = slotIdx;
+  highlightTimelineDragSelection(roomId);
+  return true;
+}
+
+function updateTimelineDragSelectionFromTouch(e) {
+  if (!isTimelineDragging || !dragRoomId) return;
+  e.preventDefault();
+  
+  const touch = e.touches[0];
+  if (!touch) return;
+  
+  const targetCell = getTimelineCellFromTouchPoint(touch.clientX, touch.clientY);
+  if (!targetCell) return;
+  
+  dragEndSlotIdx = Number(targetCell.dataset.slotIdx);
+  highlightTimelineDragSelection(dragRoomId);
+}
+
+function getTimelineCellFromTouchPoint(clientX, clientY) {
+  if (!dragRoomId) {
+    const target = document.elementFromPoint(clientX, clientY);
+    return target ? target.closest(".matrix-cell") : null;
+  }
+  
+  const rowCells = Array.from(document.querySelectorAll(`.matrix-cell[data-room-id="${dragRoomId}"]`));
+  if (rowCells.length === 0) return null;
+  
+  const firstRect = rowCells[0].getBoundingClientRect();
+  const lastRect = rowCells[rowCells.length - 1].getBoundingClientRect();
+  const isWithinYRange = clientY >= firstRect.top - TIMELINE_TOUCH_Y_TOLERANCE && clientY <= firstRect.bottom + TIMELINE_TOUCH_Y_TOLERANCE;
+  if (!isWithinYRange) return null;
+  
+  const left = firstRect.left;
+  const right = lastRect.right;
+  const clampedX = Math.min(Math.max(clientX, left), right - 1);
+  const slotWidth = (right - left) / TIME_SLOTS.length;
+  const slotIdx = Math.min(TIME_SLOTS.length - 1, Math.max(0, Math.floor((clampedX - left) / slotWidth)));
+  return rowCells[slotIdx];
 }
 
 // 전역 마우스 업 감지하여 타임라인 드래그 완료 후 예약 폼 팝업 연동
@@ -1503,12 +1552,23 @@ function setupEventListeners() {
     isDraggingSlots = false;
     lastTouchedSlotTime = "";
     touchDragAnchorSlotIdx = -1;
+    if (isTimelineDragging) {
+      isTimelineDragging = false;
+      handleTimelineDragEnd();
+    }
   });
   
   document.addEventListener("touchcancel", () => {
     isDraggingSlots = false;
     lastTouchedSlotTime = "";
     touchDragAnchorSlotIdx = -1;
+    if (isTimelineDragging) {
+      isTimelineDragging = false;
+      dragRoomId = "";
+      dragStartSlotIdx = -1;
+      dragEndSlotIdx = -1;
+      renderTimelineMatrix();
+    }
   });
   
   // 하단 타임라인 날짜 네비게이션 버튼 바인딩

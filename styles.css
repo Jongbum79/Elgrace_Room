@@ -1168,11 +1168,11 @@ body.mobile-mode .card {
 }
 
 body.mobile-mode .calendar-days-grid {
-  grid-auto-rows: minmax(35px, auto);
+  grid-auto-rows: minmax(45px, auto);
 }
 
 body.mobile-mode .calendar-day {
-  min-height: 35px;
+  min-height: 45px;
   padding: 2px;
   gap: 1px;
 }
@@ -1318,6 +1318,10 @@ body.mobile-mode .matrix-selecting-bar {
 
 body.mobile-mode .matrix-selecting-tooltip {
   bottom: calc(100% + 5px);
+}
+
+body.mobile-mode .matrix-cell {
+  touch-action: none;
 }
 
 body.mobile-mode #selected-date-badge {
