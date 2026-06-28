@@ -943,7 +943,7 @@ function renderTimelineMatrix() {
       } else {
         // 드래그를 통한 시간 선택 예약 기능
         tdCell.addEventListener("mousedown", (e) => {
-          beginTimelineDragSelection(room.id, idx);
+          beginTimelineDragSelection(room.id, idx, tdCell);
           e.preventDefault();
         });
         
@@ -964,7 +964,7 @@ function renderTimelineMatrix() {
         });
         
         tdCell.addEventListener("touchstart", (e) => {
-          scheduleTimelineLongPressSelection(e, room.id, idx);
+          scheduleTimelineLongPressSelection(e, room.id, idx, tdCell);
         }, { passive: false });
         
         tdCell.addEventListener("touchmove", (e) => {
@@ -987,7 +987,7 @@ function renderTimelineMatrix() {
   table.appendChild(tbody);
 }
 
-function scheduleTimelineLongPressSelection(e, roomId, slotIdx) {
+function scheduleTimelineLongPressSelection(e, roomId, slotIdx, sourceCell) {
   const touch = e.touches[0];
   if (!touch) return;
   
@@ -1001,7 +1001,7 @@ function scheduleTimelineLongPressSelection(e, roomId, slotIdx) {
   
   timelineLongPressTimer = setTimeout(() => {
     if (!pendingTimelineTouch) return;
-    const started = beginTimelineDragSelection(roomId, slotIdx);
+    const started = beginTimelineDragSelection(roomId, slotIdx, sourceCell);
     if (started && window.navigator && window.navigator.vibrate) {
       window.navigator.vibrate(12);
     }
@@ -1015,7 +1015,16 @@ function clearTimelineLongPress() {
   pendingTimelineTouch = null;
 }
 
-function beginTimelineDragSelection(roomId, slotIdx) {
+function clearTimelineSelectionVisuals() {
+  document.body.classList.remove("timeline-touch-selecting");
+  const existingBar = document.getElementById("matrix-dynamic-selecting-bar");
+  if (existingBar) existingBar.remove();
+  document.querySelectorAll(".matrix-cell.timeline-touch-active").forEach(cell => {
+    cell.classList.remove("timeline-touch-active");
+  });
+}
+
+function beginTimelineDragSelection(roomId, slotIdx, sourceCell = null) {
   if (!checkLogin()) return false;
   
   const datePolicy = checkDateReservationAllowed(selectedDateStr);
@@ -1028,7 +1037,8 @@ function beginTimelineDragSelection(roomId, slotIdx) {
   dragRoomId = roomId;
   dragStartSlotIdx = slotIdx;
   dragEndSlotIdx = slotIdx;
-  highlightTimelineDragSelection(roomId);
+  document.body.classList.add("timeline-touch-selecting");
+  highlightTimelineDragSelection(roomId, sourceCell);
   return true;
 }
 
@@ -1132,15 +1142,19 @@ function handleTimelineDragEnd() {
   dragRoomId = "";
   dragStartSlotIdx = -1;
   dragEndSlotIdx = -1;
+  clearTimelineSelectionVisuals();
 }
 
 // 타임라인 내 드래그 범위 하이라이트 계산
-function highlightTimelineDragSelection(roomId) {
+function highlightTimelineDragSelection(roomId, preferredStartCell = null) {
   // 기존 하이라이트 바 제거
   const existingBar = document.getElementById("matrix-dynamic-selecting-bar");
   if (existingBar) {
     existingBar.remove();
   }
+  document.querySelectorAll(".matrix-cell.timeline-touch-active").forEach(cell => {
+    cell.classList.remove("timeline-touch-active");
+  });
   
   if (dragStartSlotIdx === -1 || dragEndSlotIdx === -1 || roomId === "") return;
   
@@ -1162,8 +1176,10 @@ function highlightTimelineDragSelection(roomId) {
   }
   
   // 첫 번째 셀 위치에 바를 오버레이로 그려줌
-  const startCell = document.querySelector(`.matrix-cell[data-room-id="${roomId}"][data-slot-idx="${minIdx}"]`);
+  const rowCells = Array.from(document.querySelectorAll(`.matrix-cell[data-room-id="${roomId}"]`));
+  const startCell = preferredStartCell || rowCells[minIdx] || document.querySelector(`.matrix-cell[data-room-id="${roomId}"][data-slot-idx="${minIdx}"]`);
   if (startCell) {
+    startCell.classList.add("timeline-touch-active");
     const bar = document.createElement("div");
     bar.id = "matrix-dynamic-selecting-bar";
     bar.classList.add("matrix-selecting-bar");
@@ -1617,6 +1633,7 @@ function setupEventListeners() {
       dragRoomId = "";
       dragStartSlotIdx = -1;
       dragEndSlotIdx = -1;
+      clearTimelineSelectionVisuals();
       renderTimelineMatrix();
     }
   });

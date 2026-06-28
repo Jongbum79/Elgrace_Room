@@ -1335,6 +1335,20 @@ body.mobile-mode .matrix-cell {
   user-select: none;
 }
 
+body.timeline-touch-selecting .timeline-scroll-wrapper {
+  touch-action: none;
+}
+
+body.mobile-mode .matrix-cell.timeline-touch-active {
+  background: #E8F1EB;
+  box-shadow: inset 0 0 0 2px rgba(47, 95, 69, 0.45);
+}
+
+body.mobile-mode .matrix-selecting-bar {
+  z-index: 30;
+  opacity: 1;
+}
+
 body.mobile-mode #selected-date-badge {
   font-size: 15px !important;
   line-height: 1.2 !important;
