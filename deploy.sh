@@ -10,7 +10,7 @@ else
 fi
 
 echo "🚀 [1/3] 변경된 파일들을 선택합니다..."
-git add index.html app.js styles.css room_layout_data.json schema.sql server.py deploy.sh .gitignore .nojekyll
+git add index.html app.js styles.css room_layout_data.json schema.sql server.py deploy.sh .gitignore .nojekyll church_logo.jpg
 
 echo "💾 [2/3] 커밋(저장)을 생성합니다: \"$COMMIT_MSG\""
 git commit -m "$COMMIT_MSG"

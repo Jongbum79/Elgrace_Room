@@ -1076,8 +1076,27 @@ body {
 
 /* MOBILE MODE STYLES */
 body.mobile-mode .topbar {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
   padding: 12px 14px;
-  min-height: 56px;
+  min-height: auto;
+}
+
+body.mobile-mode .topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+body.mobile-mode .topbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
 }
 
 body.mobile-mode .header-titles .eyebrow {
@@ -1085,7 +1104,8 @@ body.mobile-mode .header-titles .eyebrow {
 }
 
 body.mobile-mode .header-titles h1 {
-  font-size: 16px;
+  font-size: 20px !important; /* 2 steps larger than 16px */
+  font-weight: 800;
 }
 
 body.mobile-mode .logo-container {
@@ -1172,4 +1192,36 @@ body.mobile-mode .reservation-popover {
   background: var(--mint);
   color: var(--forest);
   border-color: var(--forest);
+}
+
+/* Additional Mobile Custom Overrides */
+body.mobile-mode .layout-card .subtitle {
+  display: none;
+}
+
+body.mobile-mode .calendar-card .card-header h2 {
+  font-size: 0;
+}
+body.mobile-mode .calendar-card .card-header h2::after {
+  content: '예약 현황';
+  font-size: 16px;
+  font-weight: 700;
+}
+body.mobile-mode .calendar-card .refresh-btn {
+  display: none;
+}
+body.mobile-mode .layout-card .legend {
+  display: none;
+}
+
+body.mobile-mode .room-label {
+  font-size: 14px !important;
+}
+
+body.mobile-mode .timeline-matrix-table th:first-child,
+body.mobile-mode .timeline-matrix-table td:first-child {
+  width: 85px !important;
+  min-width: 85px !important;
+  padding: 0 6px !important;
+  font-size: 11px !important;
 }
