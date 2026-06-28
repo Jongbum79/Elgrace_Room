@@ -909,22 +909,29 @@ body {
   height: 24px;
   padding: 0;
   border: none;
-  border-right: 1px solid var(--line);
+  border-left: 1px solid var(--line);
   background: #FFFFFF;
   cursor: pointer;
   transition: all 0.1s ease;
   border-radius: 0 !important;
 }
-.modal-slots-strip .time-slot-chip:last-child {
-  border-right: none;
+.modal-slots-strip .time-slot-chip:first-child {
+  border-left: none;
+}
+.modal-slots-strip .time-slot-chip:hover:not(.booked) {
+  background: #F0F4F1;
+  border-left-color: transparent;
+}
+.modal-slots-strip .time-slot-chip:hover:not(.booked) + .time-slot-chip {
+  border-left-color: transparent;
 }
 .modal-slots-strip .time-slot-chip.selected {
   background: var(--forest);
-  border-right-color: rgba(255, 255, 255, 0.25);
+  border-left-color: rgba(255, 255, 255, 0.25);
 }
 .modal-slots-strip .time-slot-chip.booked {
   background: #EFEFEF;
-  border-right-color: #E0E0E0;
+  border-left-color: #E0E0E0;
   text-decoration: none;
   cursor: not-allowed;
 }
