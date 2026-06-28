@@ -566,6 +566,7 @@ let touchDragAnchorSlotIdx = -1;
 const TOUCH_SLOT_Y_TOLERANCE = 56;
 const ADMIN_NICKNAMES = ["최종범"];
 const PROMINENT_ROOM_LABELS = ["교육관 1", "본관", "교육관 2", "교육관 3", "소그룹 C", "소그룹 D"];
+const WEEKLY_BOOKING_OPEN_HOUR = 10;
 
 function isCurrentUserAdmin() {
   if (!currentUser) return false;
@@ -1599,7 +1600,7 @@ function getMaxAllowedBookingDate(now) {
   currentSaturday.setHours(23, 59, 59, 999);
   
   const openTimeThisSaturday = new Date(currentSaturday);
-  openTimeThisSaturday.setHours(9, 0, 0, 0);
+  openTimeThisSaturday.setHours(WEEKLY_BOOKING_OPEN_HOUR, 0, 0, 0);
   
   if (now >= openTimeThisSaturday) {
     const nextSaturday = new Date(currentSaturday);
@@ -1639,7 +1640,7 @@ function checkDateReservationAllowed(dateStr) {
     return { 
       allowed: false, 
       reason: "locked", 
-      message: `돌아오는 ${month}월 ${date}일(토) 9:00에 예약 가능`
+      message: `돌아오는 ${month}월 ${date}일(토) ${WEEKLY_BOOKING_OPEN_HOUR}:00에 예약 가능`
     };
   }
   
