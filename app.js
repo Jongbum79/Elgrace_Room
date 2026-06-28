@@ -551,6 +551,7 @@ function openReservationModal(room) {
   });
   
   // 모달 띄우기
+  updateModalTimelineTooltip();
   modal.classList.remove("hidden");
 }
 
@@ -568,6 +569,7 @@ function toggleSlotSelection(time, chipElement) {
   
   // 선택 슬롯들 정렬
   selectedModalSlots.sort((a, b) => TIME_SLOTS.indexOf(a) - TIME_SLOTS.indexOf(b));
+  updateModalTimelineTooltip();
 }
 
 function closeReservationModal() {
@@ -575,6 +577,33 @@ function closeReservationModal() {
   modal.classList.add("hidden");
   selectedModalRoom = null;
   selectedModalSlots = [];
+  updateModalTimelineTooltip();
+}
+
+function updateModalTimelineTooltip() {
+  const tooltip = document.getElementById("modal-timeline-tooltip");
+  if (!tooltip) return;
+  
+  if (selectedModalSlots.length === 0) {
+    tooltip.classList.add("hidden");
+    return;
+  }
+  
+  // 선택 슬롯들의 최소/최대 인덱스 찾기
+  const indices = selectedModalSlots.map(t => TIME_SLOTS.indexOf(t));
+  const minIdx = Math.min(...indices);
+  const maxIdx = Math.max(...indices);
+  
+  const startTime = TIME_SLOTS[minIdx];
+  const endTime = (maxIdx === TIME_SLOTS.length - 1) ? "21:00" : TIME_SLOTS[maxIdx + 1];
+  
+  tooltip.textContent = `${startTime} ~ ${endTime}`;
+  tooltip.classList.remove("hidden");
+  
+  // 선택 영역 중앙에 말풍선 배치
+  const centerSlot = (minIdx + maxIdx) / 2;
+  const leftPercent = (centerSlot + 0.5) / 24 * 100;
+  tooltip.style.left = `${leftPercent}%`;
 }
 
 // 8. 하단 타임라인 예약 매트릭스 렌더링
@@ -599,12 +628,7 @@ function renderTimelineMatrix() {
   
   TIME_SLOTS.forEach(time => {
     const thTime = document.createElement("th");
-    // 정각만 텍스트 노출하고 30분 단위는 보더만 나누어 심플하게 표현 (Linear 스타일)
-    if (time.endsWith(":00")) {
-      thTime.textContent = time.split(":")[0] + "시";
-    } else {
-      thTime.textContent = "";
-    }
+    thTime.textContent = time;
     headerRow.appendChild(thTime);
   });
   thead.appendChild(headerRow);
@@ -773,6 +797,7 @@ function handleTimelineDragEnd() {
           chip.classList.remove("selected");
         }
       });
+      updateModalTimelineTooltip();
     }
   }
   
