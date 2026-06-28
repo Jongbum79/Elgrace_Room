@@ -66,6 +66,38 @@ function reservationsOverlap(aStartTime, aEndTime, bStartTime, bEndTime) {
   return timeToMinutes(aStartTime) < timeToMinutes(bEndTime) && timeToMinutes(aEndTime) > timeToMinutes(bStartTime);
 }
 
+const RESERVATION_OWNER_COLORS = [
+  { bg: "#EAF2FB", fg: "#2F65B6", border: "#C4DDFC" },
+  { bg: "#FDF4EB", fg: "#C07027", border: "#F5DBBF" },
+  { bg: "#E8F1EB", fg: "#2F5F45", border: "#C9DCCD" },
+  { bg: "#F1ECFA", fg: "#6D56A5", border: "#D8CAE8" },
+  { bg: "#FBEFF3", fg: "#A84D69", border: "#E8C8D3" },
+  { bg: "#EEF6F8", fg: "#347486", border: "#C8E0E6" },
+  { bg: "#F8F1DD", fg: "#8A6A1F", border: "#E6D6A6" },
+  { bg: "#F0F2F8", fg: "#4E5F91", border: "#CDD4E8" }
+];
+
+function hashString(input) {
+  let hash = 0;
+  for (let i = 0; i < input.length; i++) {
+    hash = ((hash << 5) - hash) + input.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
+function getReservationOwnerColor(reservation) {
+  const ownerKey = reservation.user_id || reservation.reserved_by || "unknown";
+  return RESERVATION_OWNER_COLORS[hashString(ownerKey) % RESERVATION_OWNER_COLORS.length];
+}
+
+function applyReservationOwnerColor(element, reservation) {
+  const color = getReservationOwnerColor(reservation);
+  element.style.background = color.bg;
+  element.style.color = color.fg;
+  element.style.border = `1px solid ${color.border}`;
+}
+
 // 2. 초기화 작업
 document.addEventListener("DOMContentLoaded", async () => {
   initSupabase();
@@ -411,15 +443,7 @@ function renderCalendar() {
     dayReservations.forEach(res => {
       const pill = document.createElement("div");
       pill.classList.add("calendar-res-pill");
-      
-      // 방 종류에 따른 색상 구분 (교육관 등은 파랑, 소그룹은 주황, 영유아 등은 초록)
-      if (res.room_name.includes("교육관")) {
-        pill.classList.add("res-pill-blue");
-      } else if (res.room_name.includes("소그룹")) {
-        pill.classList.add("res-pill-orange");
-      } else {
-        pill.classList.add("res-pill-emerald");
-      }
+      applyReservationOwnerColor(pill, res);
       
       // 모바일 모드와 데스크톱 모드에 따른 표시 데이터 구분
       if (currentViewMode === "desktop") {
@@ -920,14 +944,7 @@ function renderTimelineMatrix() {
           // 예약 표시 바 렌더링
           const bar = document.createElement("div");
           bar.classList.add("matrix-booking-bar");
-          
-          if (room.text.includes("교육관")) {
-            bar.classList.add("bg-bar-blue");
-          } else if (room.text.includes("소그룹")) {
-            bar.classList.add("bg-bar-orange");
-          } else {
-            bar.classList.add("bg-bar-emerald");
-          }
+          applyReservationOwnerColor(bar, reservation);
           
           bar.style.width = `calc(${duration * 100}% - 4px)`;
           bar.style.zIndex = "5";
