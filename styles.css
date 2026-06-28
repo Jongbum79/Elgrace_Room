@@ -864,7 +864,7 @@ body {
 .modal-timeline-hours {
   display: grid;
   grid-template-columns: repeat(24, 1fr);
-  text-align: left;
+  text-align: center;
   font-size: 10px;
   font-weight: 700;
   color: var(--muted);

@@ -25,16 +25,6 @@
       "is_reservable": false
     },
     {
-      "id": "직사각형_5",
-      "text": "",
-      "x": 2.6,
-      "y": 0.0,
-      "width": 155.2,
-      "height": 36.6,
-      "role": "room",
-      "is_reservable": true
-    },
-    {
       "id": "TextBox_7",
       "text": "별관  :  지하 1 층",
       "x": 0.0,
@@ -43,16 +33,6 @@
       "height": 36.6,
       "role": "header",
       "is_reservable": false
-    },
-    {
-      "id": "직사각형_8",
-      "text": "",
-      "x": 2.6,
-      "y": 256.3,
-      "width": 155.2,
-      "height": 36.6,
-      "role": "room",
-      "is_reservable": true
     },
     {
       "id": "TextBox_9",
