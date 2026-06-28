@@ -749,13 +749,8 @@ body {
 /* Matrix Cells */
 .matrix-cell {
   background: #FFFFFF;
-  cursor: cell;
+  cursor: pointer;
   transition: background 0.1s ease;
-}
-
-.matrix-cell.drag-selecting {
-  background: rgba(24, 78, 58, 0.1);
-  border: 1px dashed var(--forest);
 }
 
 .matrix-cell.booked {
@@ -852,6 +847,40 @@ body {
   border: 1.5px dashed #DC2626;
 }
 
+/* Floating tooltip bubble for matrix selecting bar */
+.matrix-selecting-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+  z-index: 10;
+}
+.matrix-selecting-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 4px 4px 0;
+  border-style: solid;
+  border-color: var(--ink) transparent transparent;
+}
+.selecting-bar-red .matrix-selecting-tooltip {
+  background: #DC2626 !important;
+}
+.selecting-bar-red .matrix-selecting-tooltip::after {
+  border-color: #DC2626 transparent transparent !important;
+}
+
 /* Modal Slots timeline styling without scroll */
 .modal-timeline-container {
   position: relative; /* For tooltip positioning */
@@ -918,11 +947,11 @@ body {
 .modal-slots-strip .time-slot-chip:first-child {
   border-left: none;
 }
-.modal-slots-strip .time-slot-chip:hover:not(.booked) {
+.modal-slots-strip .time-slot-chip:hover:not(.booked):not(.selected) {
   background: #F0F4F1;
   border-left-color: transparent;
 }
-.modal-slots-strip .time-slot-chip:hover:not(.booked) + .time-slot-chip {
+.modal-slots-strip .time-slot-chip:hover:not(.booked):not(.selected) + .time-slot-chip {
   border-left-color: transparent;
 }
 .modal-slots-strip .time-slot-chip.selected {

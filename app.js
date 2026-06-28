@@ -754,16 +754,13 @@ function renderTimelineMatrix() {
         tdCell.addEventListener("mousedown", (e) => {
           if (!checkLogin()) return;
           
-          // 기존 선택된 셀의 하이라이트 해제
-          document.querySelectorAll(".matrix-cell").forEach(cell => {
-            cell.classList.remove("drag-selecting");
-          });
-          
           isTimelineDragging = true;
           dragRoomId = room.id;
           dragStartSlotIdx = idx;
           dragEndSlotIdx = idx;
-          tdCell.classList.add("drag-selecting");
+          
+          // 즉시 대시선 선택 바 그리기
+          highlightTimelineDragSelection(room.id);
           e.preventDefault();
         });
         
@@ -902,6 +899,15 @@ function highlightTimelineDragSelection(roomId) {
       }
       bar.textContent = "선택 중...";
     }
+    
+    // 시간 안내 말풍선 추가
+    const startTime = TIME_SLOTS[minIdx];
+    const endTime = (maxIdx === TIME_SLOTS.length - 1) ? "21:00" : TIME_SLOTS[maxIdx + 1];
+    
+    const tooltip = document.createElement("div");
+    tooltip.classList.add("matrix-selecting-tooltip");
+    tooltip.textContent = hasConflict ? "선택 불가" : `${startTime} ~ ${endTime}`;
+    bar.appendChild(tooltip);
     
     const duration = maxIdx - minIdx + 1;
     bar.style.width = `calc(${duration * 100}% - 4px)`;
