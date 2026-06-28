@@ -506,13 +506,17 @@ function renderRoomLayout() {
     const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
     text.setAttribute("x", r.x + r.width / 2);
     text.setAttribute("y", r.y + r.height / 2);
-    text.setAttribute("class", `room-text ${!r.is_reservable ? "room-text-utility" : ""}`);
     
     // 긴 텍스트 줄바꿈/잘림 가공 (교육관 1 (구 대학부실...) -> 교육관 1)
     let displayName = r.text;
     if (displayName.includes("(")) {
       displayName = displayName.split("(")[0].trim();
     }
+    
+    const textClasses = ["room-text"];
+    if (!r.is_reservable) textClasses.push("room-text-utility");
+    if (PROMINENT_ROOM_LABELS.includes(displayName)) textClasses.push("room-text-prominent");
+    text.setAttribute("class", textClasses.join(" "));
     text.textContent = displayName;
     
     svg.appendChild(text);
@@ -527,6 +531,7 @@ let lastTouchedSlotTime = "";
 let touchDragAnchorSlotIdx = -1;
 const TOUCH_SLOT_Y_TOLERANCE = 56;
 const ADMIN_NICKNAMES = ["최종범"];
+const PROMINENT_ROOM_LABELS = ["교육관 1", "본관", "교육관 2", "교육관 3", "소그룹 C", "소그룹 D"];
 
 function isCurrentUserAdmin() {
   if (!currentUser) return false;
@@ -1215,13 +1220,7 @@ function selectDate(dateStr, triggerElement = null) {
   currentYear = d.getFullYear();
   currentMonth = d.getMonth();
   
-  // 타임라인 선택 라벨 변경
-  const badge = document.getElementById("selected-date-badge");
-  if (badge) {
-    const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
-    const dayName = weekdays[d.getDay()];
-    badge.textContent = `${d.getFullYear()}년 ${String(d.getMonth() + 1).padStart(2, "0")}월 ${String(d.getDate()).padStart(2, "0")}일 (${dayName})`;
-  }
+  updateSelectedDateBadge(d);
   
   // 전체 데이터 로드 및 렌더링
   refreshData().then(() => {
@@ -1231,7 +1230,17 @@ function selectDate(dateStr, triggerElement = null) {
   return true;
 }
 
+function updateSelectedDateBadge(date) {
+  const badge = document.getElementById("selected-date-badge");
+  if (!badge) return;
+  
+  const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
+  const dayName = weekdays[date.getDay()];
+  badge.textContent = `${date.getFullYear()}년 ${String(date.getMonth() + 1).padStart(2, "0")}월 ${String(date.getDate()).padStart(2, "0")}일 (${dayName})`;
+}
+
 function renderAll() {
+  updateSelectedDateBadge(new Date(selectedDateStr));
   renderCalendar();
   renderRoomLayout();
   renderTimelineMatrix();

@@ -531,6 +531,11 @@ body {
   dominant-baseline: middle;
 }
 
+.room-text-prominent {
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .room-text-utility {
   fill: #80807A;
 }
@@ -747,6 +752,10 @@ body {
 
 .timeline-matrix-table th:first-child {
   z-index: 20;
+}
+
+#selected-date-badge {
+  white-space: nowrap;
 }
 
 /* Matrix Cells */
@@ -1263,6 +1272,11 @@ body.mobile-mode .room-text {
   font-size: 18px !important;
 }
 
+body.mobile-mode .room-text-prominent {
+  font-size: 20px !important;
+  font-weight: 800;
+}
+
 body.mobile-mode .room-text-utility {
   font-size: 17px !important;
 }
@@ -1273,6 +1287,15 @@ body.mobile-mode .building-label {
 
 body.mobile-mode .timeline-table-container {
   min-width: 510px;
+}
+
+body.mobile-mode #selected-date-badge {
+  font-size: 15px !important;
+  line-height: 1.2 !important;
+  min-width: 180px !important;
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+  white-space: nowrap !important;
 }
 
 body.mobile-mode .timeline-matrix-table th:first-child,
