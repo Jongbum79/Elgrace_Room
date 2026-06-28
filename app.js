@@ -242,13 +242,19 @@ function handleRealKakaoLogin() {
         window.Kakao.API.request({
           url: '/v2/user/me',
           success: function(res) {
-            const kakaoAccount = res.kakao_account;
-            const user = {
-              id: `kakao_${res.id}`,
-              nickname: kakaoAccount.profile.nickname,
-              profile_image: kakaoAccount.profile.profile_image_url
-            };
-            saveUserSession(user);
+            try {
+              const kakaoAccount = res.kakao_account || {};
+              const profile = kakaoAccount.profile || {};
+              const user = {
+                id: `kakao_${res.id}`,
+                nickname: profile.nickname || "카카오 사용자",
+                profile_image: profile.profile_image_url || null
+              };
+              saveUserSession(user);
+            } catch (e) {
+              console.error("Kakao profile parse error:", e);
+              showToast("사용자 정보 분석 실패: " + e.message);
+            }
           },
           fail: function(err) {
             console.error("Kakao 프로필 페치 에러:", err);
