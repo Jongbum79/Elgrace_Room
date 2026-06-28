@@ -27,12 +27,37 @@ let selectedDateStr = formatDate(new Date());
 let currentUser = null;
 let currentViewMode = "desktop"; // desktop | mobile
 
-// 시간 슬롯 리스트 (09:00 ~ 21:00, 30분 단위)
+// 시간 슬롯 리스트 (09:00 ~ 21:00, 1시간 단위)
 const TIME_SLOTS = [];
 for (let h = 9; h < 21; h++) {
   const hourStr = String(h).padStart(2, "0");
   TIME_SLOTS.push(`${hourStr}:00`);
-  TIME_SLOTS.push(`${hourStr}:30`);
+}
+
+function timeToMinutes(timeStr) {
+  const [hours, minutes] = timeStr.split(":").map(Number);
+  return hours * 60 + minutes;
+}
+
+function getSlotStartMinutes(slotIdx) {
+  return timeToMinutes(TIME_SLOTS[slotIdx]);
+}
+
+function getSlotEndMinutes(slotIdx) {
+  if (slotIdx === TIME_SLOTS.length - 1) return timeToMinutes("21:00");
+  return timeToMinutes(TIME_SLOTS[slotIdx + 1]);
+}
+
+function getSlotEndTime(slotIdx) {
+  return slotIdx === TIME_SLOTS.length - 1 ? "21:00" : TIME_SLOTS[slotIdx + 1];
+}
+
+function reservationOverlapsSlot(reservation, slotIdx) {
+  const slotStart = getSlotStartMinutes(slotIdx);
+  const slotEnd = getSlotEndMinutes(slotIdx);
+  const reservationStart = timeToMinutes(reservation.start_time);
+  const reservationEnd = timeToMinutes(reservation.end_time);
+  return reservationStart < slotEnd && reservationEnd > slotStart;
 }
 
 // 2. 초기화 작업
@@ -378,7 +403,7 @@ function renderCalendar() {
     
     // 날짜 클릭 이벤트 바인딩
     dayDiv.addEventListener("click", () => {
-      selectDate(dateStr);
+      selectDate(dateStr, dayDiv);
     });
     
     daysGrid.appendChild(dayDiv);
@@ -453,15 +478,10 @@ function renderRoomLayout() {
       const roomRes = dateReservations.filter(res => res.room_id === r.id);
       
       if (roomRes.length > 0) {
-        // 예약 슬롯 수 계산 (30분 단위 슬롯 24개)
-        let bookedSlotsCount = 0;
-        roomRes.forEach(res => {
-          const startIndex = TIME_SLOTS.indexOf(res.start_time);
-          const endIndex = TIME_SLOTS.indexOf(res.end_time);
-          if (startIndex !== -1 && endIndex !== -1) {
-            bookedSlotsCount += (endIndex - startIndex);
-          }
-        });
+        // 예약 슬롯 수 계산 (1시간 단위 슬롯)
+        const bookedSlotsCount = TIME_SLOTS.filter((_, idx) => {
+          return roomRes.some(res => reservationOverlapsSlot(res, idx));
+        }).length;
         
         if (bookedSlotsCount >= TIME_SLOTS.length) {
           stateClass = "status-full";
@@ -503,9 +523,16 @@ function renderRoomLayout() {
 let selectedModalSlots = [];
 let selectedModalRoom = null;
 let isDraggingSlots = false;
+let lastTouchedSlotTime = "";
 
 function openReservationModal(room) {
   if (!checkLogin()) return;
+  
+  const datePolicy = checkDateReservationAllowed(selectedDateStr);
+  if (!datePolicy.allowed) {
+    showToast(datePolicy.message || "지난 날짜는 예약할 수 없습니다.");
+    return;
+  }
   
   selectedModalRoom = room;
   selectedModalSlots = [];
@@ -526,7 +553,7 @@ function openReservationModal(room) {
   // 현재 날짜/방의 예약 상황 추출
   const roomRes = reservations.filter(res => res.date === selectedDateStr && res.room_id === room.id);
   
-  // 30분 단위 슬롯 생성
+  // 1시간 단위 슬롯 생성
   modalSlotsGrid.innerHTML = "";
   
   TIME_SLOTS.forEach(time => {
@@ -538,10 +565,8 @@ function openReservationModal(room) {
     
     // 이미 예약되었는지 여부 확인
     const isBooked = roomRes.some(res => {
-      const startIndex = TIME_SLOTS.indexOf(res.start_time);
-      const endIndex = TIME_SLOTS.indexOf(res.end_time);
       const currentIndex = TIME_SLOTS.indexOf(time);
-      return currentIndex >= startIndex && currentIndex < endIndex;
+      return reservationOverlapsSlot(res, currentIndex);
     });
     
     if (isBooked) {
@@ -549,10 +574,8 @@ function openReservationModal(room) {
       
       // 예약 디테일 찾기
       const activeRes = roomRes.find(res => {
-        const startIndex = TIME_SLOTS.indexOf(res.start_time);
-        const endIndex = TIME_SLOTS.indexOf(res.end_time);
         const currentIndex = TIME_SLOTS.indexOf(time);
-        return currentIndex >= startIndex && currentIndex < endIndex;
+        return reservationOverlapsSlot(res, currentIndex);
       });
       
       if (activeRes) {
@@ -561,7 +584,7 @@ function openReservationModal(room) {
           if (tooltip) {
             tooltip.textContent = `${activeRes.reserved_by}: ${activeRes.title}`;
             tooltip.classList.remove("hidden");
-            const leftPercent = (TIME_SLOTS.indexOf(time) + 0.5) / 24 * 100;
+            const leftPercent = (TIME_SLOTS.indexOf(time) + 0.5) / TIME_SLOTS.length * 100;
             tooltip.style.left = `${leftPercent}%`;
           }
         });
@@ -586,6 +609,31 @@ function openReservationModal(room) {
           toggleSlotSelection(time, chip);
         }
       });
+      
+      chip.addEventListener("touchstart", (e) => {
+        isDraggingSlots = true;
+        lastTouchedSlotTime = time;
+        toggleSlotSelection(time, chip);
+        e.preventDefault();
+      }, { passive: false });
+      
+      chip.addEventListener("touchmove", (e) => {
+        if (!isDraggingSlots) return;
+        e.preventDefault();
+        
+        const touch = e.touches[0];
+        if (!touch) return;
+        
+        const target = document.elementFromPoint(touch.clientX, touch.clientY);
+        const targetChip = target ? target.closest("#modal-slots-grid .time-slot-chip") : null;
+        if (!targetChip || targetChip.classList.contains("booked")) return;
+        
+        const targetTime = targetChip.dataset.time;
+        if (targetTime && targetTime !== lastTouchedSlotTime) {
+          lastTouchedSlotTime = targetTime;
+          toggleSlotSelection(targetTime, targetChip);
+        }
+      }, { passive: false });
     }
     
     modalSlotsGrid.appendChild(chip);
@@ -662,6 +710,7 @@ function closeReservationModal() {
   modal.classList.add("hidden");
   selectedModalRoom = null;
   selectedModalSlots = [];
+  lastTouchedSlotTime = "";
   updateModalTimelineTooltip();
 }
 
@@ -680,14 +729,14 @@ function updateModalTimelineTooltip() {
   const maxIdx = Math.max(...indices);
   
   const startTime = TIME_SLOTS[minIdx];
-  const endTime = (maxIdx === TIME_SLOTS.length - 1) ? "21:00" : TIME_SLOTS[maxIdx + 1];
+  const endTime = getSlotEndTime(maxIdx);
   
   tooltip.textContent = `${startTime} ~ ${endTime}`;
   tooltip.classList.remove("hidden");
   
   // 선택 영역 중앙에 말풍선 배치
   const centerSlot = (minIdx + maxIdx) / 2;
-  const leftPercent = (centerSlot + 0.5) / 24 * 100;
+  const leftPercent = (centerSlot + 0.5) / TIME_SLOTS.length * 100;
   tooltip.style.left = `${leftPercent}%`;
 }
 
@@ -703,7 +752,7 @@ function renderTimelineMatrix() {
   
   table.innerHTML = "";
   
-  // 1. 헤더 행 생성 (공간명 + 30분 단위 슬롯 컬럼)
+  // 1. 헤더 행 생성 (공간명 + 1시간 단위 슬롯 컬럼)
   const thead = document.createElement("thead");
   const headerRow = document.createElement("tr");
   
@@ -737,10 +786,10 @@ function renderTimelineMatrix() {
     const roomRes = dateReservations.filter(res => res.room_id === room.id);
     
     roomRes.forEach(res => {
-      const startIdx = TIME_SLOTS.indexOf(res.start_time);
-      const endIdx = TIME_SLOTS.indexOf(res.end_time);
-      for (let idx = startIdx; idx < endIdx; idx++) {
-        if (idx !== -1) slotBookingMap[idx] = res;
+      for (let idx = 0; idx < TIME_SLOTS.length; idx++) {
+        if (reservationOverlapsSlot(res, idx)) {
+          slotBookingMap[idx] = res;
+        }
       }
     });
     
@@ -794,6 +843,12 @@ function renderTimelineMatrix() {
         // 드래그를 통한 시간 선택 예약 기능
         tdCell.addEventListener("mousedown", (e) => {
           if (!checkLogin()) return;
+          
+          const datePolicy = checkDateReservationAllowed(selectedDateStr);
+          if (!datePolicy.allowed) {
+            showToast(datePolicy.message || "지난 날짜는 예약할 수 없습니다.");
+            return;
+          }
           
           isTimelineDragging = true;
           dragRoomId = room.id;
@@ -850,9 +905,7 @@ function handleTimelineDragEnd() {
     for (let idx = minIdx; idx <= maxIdx; idx++) {
       const time = TIME_SLOTS[idx];
       const isBooked = dateReservations.some(res => {
-        const start = TIME_SLOTS.indexOf(res.start_time);
-        const end = TIME_SLOTS.indexOf(res.end_time);
-        return idx >= start && idx < end;
+        return reservationOverlapsSlot(res, idx);
       });
       
       if (isBooked) {
@@ -907,9 +960,7 @@ function highlightTimelineDragSelection(roomId) {
   
   for (let idx = minIdx; idx <= maxIdx; idx++) {
     const isBooked = dateReservations.some(res => {
-      const start = TIME_SLOTS.indexOf(res.start_time);
-      const end = TIME_SLOTS.indexOf(res.end_time);
-      return idx >= start && idx < end;
+      return reservationOverlapsSlot(res, idx);
     });
     if (isBooked) {
       hasConflict = true;
@@ -943,7 +994,7 @@ function highlightTimelineDragSelection(roomId) {
     
     // 시간 안내 말풍선 추가
     const startTime = TIME_SLOTS[minIdx];
-    const endTime = (maxIdx === TIME_SLOTS.length - 1) ? "21:00" : TIME_SLOTS[maxIdx + 1];
+    const endTime = getSlotEndTime(maxIdx);
     
     const tooltip = document.createElement("div");
     tooltip.classList.add("matrix-selecting-tooltip");
@@ -961,6 +1012,12 @@ async function submitReservation() {
   if (!checkLogin()) return;
   if (!selectedModalRoom) return;
   
+  const datePolicy = checkDateReservationAllowed(selectedDateStr);
+  if (!datePolicy.allowed) {
+    showToast(datePolicy.message || "지난 날짜는 예약할 수 없습니다.");
+    return;
+  }
+  
   const titleInput = document.getElementById("modal-title-input");
   const title = titleInput.value.trim();
   
@@ -975,7 +1032,7 @@ async function submitReservation() {
     return;
   }
   
-  // 시작 시간과 종료 시간 유추 (연속된 시간의 최솟값 ~ 최댓값 + 30분)
+  // 시작 시간과 종료 시간 유추 (연속된 시간의 최솟값 ~ 최댓값 + 1시간)
   selectedModalSlots.sort((a, b) => TIME_SLOTS.indexOf(a) - TIME_SLOTS.indexOf(b));
   
   // 연속성 검증
@@ -990,13 +1047,8 @@ async function submitReservation() {
   const startTime = selectedModalSlots[0];
   const lastSelectedIdx = TIME_SLOTS.indexOf(selectedModalSlots[selectedModalSlots.length - 1]);
   
-  // 종료 시간은 마지막 선택 슬롯의 30분 뒤
-  let endTime = "";
-  if (lastSelectedIdx === TIME_SLOTS.length - 1) {
-    endTime = "21:00";
-  } else {
-    endTime = TIME_SLOTS[lastSelectedIdx + 1];
-  }
+  // 종료 시간은 마지막 선택 슬롯의 1시간 뒤
+  const endTime = getSlotEndTime(lastSelectedIdx);
   
   const payload = {
     room_id: selectedModalRoom.id,
@@ -1050,8 +1102,9 @@ function showReservationDetail(res) {
   title.textContent = res.title;
   user.textContent = res.reserved_by;
   
-  // 본인의 예약인 경우에만 예약 취소 버튼 활성화
-  if (currentUser && res.user_id === currentUser.id) {
+  // 본인의 예약이면서 오늘 또는 미래 날짜인 경우에만 취소 활성화 (지난 예약은 변경 불가)
+  const todayStr = formatDate(new Date());
+  if (currentUser && res.user_id === currentUser.id && res.date >= todayStr) {
     delBtn.classList.remove("hidden");
   } else {
     delBtn.classList.add("hidden");
@@ -1065,6 +1118,12 @@ async function cancelReservationSilent() {
   
   if (activeReservationForDetail.user_id !== currentUser.id) {
     showToast("본인의 예약만 취소할 수 있습니다.");
+    return;
+  }
+  
+  const todayStr = formatDate(new Date());
+  if (activeReservationForDetail.date < todayStr) {
+    showToast("지난 예약은 취소할 수 없습니다.");
     return;
   }
   
@@ -1090,7 +1149,13 @@ async function cancelReservationSilent() {
 }
 
 // 11. 유틸리티 및 보조 UI 함수
-function selectDate(dateStr) {
+function selectDate(dateStr, triggerElement = null) {
+  const datePolicy = checkDateReservationAllowed(dateStr);
+  if (datePolicy.reason === "locked") {
+    showFloatingTooltip(triggerElement || document.body, datePolicy.message);
+    return false;
+  }
+  
   selectedDateStr = dateStr;
   
   // 달력 연/월 업데이트 (이전/다음 달 클릭 대비)
@@ -1110,6 +1175,8 @@ function selectDate(dateStr) {
   refreshData().then(() => {
     renderAll();
   });
+  
+  return true;
 }
 
 function renderAll() {
@@ -1293,6 +1360,7 @@ function setupEventListeners() {
   // 전역 마우스 업 감지하여 드래그 상태 해제
   document.addEventListener("mouseup", () => {
     isDraggingSlots = false;
+    lastTouchedSlotTime = "";
     const existingBar = document.getElementById("matrix-dynamic-selecting-bar");
     if (existingBar) {
       existingBar.remove();
@@ -1301,6 +1369,11 @@ function setupEventListeners() {
       isTimelineDragging = false;
       handleTimelineDragEnd();
     }
+  });
+  
+  document.addEventListener("touchend", () => {
+    isDraggingSlots = false;
+    lastTouchedSlotTime = "";
   });
   
   // 하단 타임라인 날짜 네비게이션 버튼 바인딩
@@ -1313,6 +1386,10 @@ function setupEventListeners() {
 }
 
 function navigateMonth(offset) {
+  const previousYear = currentYear;
+  const previousMonth = currentMonth;
+  const previousSelectedDateStr = selectedDateStr;
+  
   currentMonth += offset;
   if (currentMonth < 0) {
     currentMonth = 11;
@@ -1330,7 +1407,12 @@ function navigateMonth(offset) {
     selectedDateStr = formatDate(new Date(currentYear, currentMonth, 1));
   }
   
-  selectDate(selectedDateStr);
+  const selected = selectDate(selectedDateStr);
+  if (!selected) {
+    currentYear = previousYear;
+    currentMonth = previousMonth;
+    selectedDateStr = previousSelectedDateStr;
+  }
 }
 
 function navigateDay(offset) {
@@ -1338,15 +1420,9 @@ function navigateDay(offset) {
   currentDate.setDate(currentDate.getDate() + offset);
   
   const newDateStr = formatDate(currentDate);
-  
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
-  if (year !== currentYear || month !== currentMonth) {
-    currentYear = year;
-    currentMonth = month;
-  }
-  
-  selectDate(newDateStr);
+
+  const badge = document.getElementById("selected-date-badge");
+  selectDate(newDateStr, badge);
 }
 
 // 12. 공통 도우미 함수 (Cookie, Date 포맷 등)
@@ -1381,4 +1457,84 @@ function getCookie(name) {
 
 function deleteCookie(name) {
   document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+}
+
+// 13. 예약 제한 정책 및 말풍선 기능 구현
+function getMaxAllowedBookingDate(now) {
+  const currentSunday = new Date(now);
+  currentSunday.setDate(now.getDate() - now.getDay());
+  currentSunday.setHours(0, 0, 0, 0);
+  
+  const currentSaturday = new Date(currentSunday);
+  currentSaturday.setDate(currentSunday.getDate() + 6);
+  currentSaturday.setHours(23, 59, 59, 999);
+  
+  const openTimeThisSaturday = new Date(currentSaturday);
+  openTimeThisSaturday.setHours(9, 0, 0, 0);
+  
+  if (now >= openTimeThisSaturday) {
+    const nextSaturday = new Date(currentSaturday);
+    nextSaturday.setDate(currentSaturday.getDate() + 7);
+    nextSaturday.setHours(23, 59, 59, 999);
+    return nextSaturday;
+  } else {
+    return currentSaturday;
+  }
+}
+
+function checkDateReservationAllowed(dateStr) {
+  const now = new Date();
+  const targetDate = new Date(dateStr);
+  targetDate.setHours(0, 0, 0, 0);
+  
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+  if (targetDate < today) {
+    return { 
+      allowed: false, 
+      reason: "past",
+      message: "지난 날짜는 예약하거나 변경할 수 없습니다."
+    };
+  }
+  
+  const maxAllowedDate = getMaxAllowedBookingDate(now);
+  if (targetDate > maxAllowedDate) {
+    const targetSunday = new Date(targetDate);
+    targetSunday.setDate(targetDate.getDate() - targetDate.getDay());
+    
+    const unlockSaturday = new Date(targetSunday);
+    unlockSaturday.setDate(targetSunday.getDate() - 1);
+    
+    const month = unlockSaturday.getMonth() + 1;
+    const date = unlockSaturday.getDate();
+    return { 
+      allowed: false, 
+      reason: "locked", 
+      message: `돌아오는 ${month}월 ${date}일(토) 9:00에 예약 가능`
+    };
+  }
+  
+  return { allowed: true };
+}
+
+function showFloatingTooltip(element, message) {
+  document.querySelectorAll(".calendar-floating-tooltip").forEach(el => el.remove());
+  
+  const tooltip = document.createElement("div");
+  tooltip.classList.add("calendar-floating-tooltip");
+  tooltip.textContent = message;
+  
+  document.body.appendChild(tooltip);
+  
+  const rect = element.getBoundingClientRect();
+  const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+  const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+  
+  tooltip.style.left = `${rect.left + rect.width / 2 + scrollLeft}px`;
+  tooltip.style.top = `${rect.top - 8 + scrollTop}px`;
+  
+  setTimeout(() => {
+    tooltip.style.opacity = "0";
+    setTimeout(() => tooltip.remove(), 300);
+  }, 2500);
 }

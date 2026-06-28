@@ -698,7 +698,7 @@ body {
 
 .timeline-table-container {
   width: 100%;
-  min-width: 900px;
+  min-width: 720px;
 }
 
 .timeline-matrix-table {
@@ -895,7 +895,7 @@ body {
 }
 .modal-timeline-hours {
   display: grid;
-  grid-template-columns: repeat(24, 1fr);
+  grid-template-columns: repeat(12, 1fr);
   text-align: center;
   font-size: 10px;
   font-weight: 700;
@@ -931,11 +931,12 @@ body {
 }
 .modal-slots-strip {
   display: grid;
-  grid-template-columns: repeat(24, 1fr);
+  grid-template-columns: repeat(12, 1fr);
   gap: 0;
   border: 1px solid var(--line);
   border-radius: 6px;
   overflow: hidden;
+  touch-action: none;
 }
 .modal-slots-strip .time-slot-chip {
   height: 24px;
@@ -946,6 +947,7 @@ body {
   cursor: pointer;
   transition: all 0.1s ease;
   border-radius: 0 !important;
+  touch-action: none;
 }
 .modal-slots-strip .time-slot-chip:first-child {
   border-left: none;
@@ -1072,6 +1074,35 @@ body {
 .toast.show {
   opacity: 0.95;
   transform: translateX(-50%) translateY(0);
+}
+
+.calendar-floating-tooltip {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  background: var(--ink);
+  color: white;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.3;
+  padding: 7px 10px;
+  border-radius: 6px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.18);
+  z-index: 3000;
+  pointer-events: none;
+  white-space: nowrap;
+  opacity: 0.96;
+  transition: opacity 0.25s ease;
+}
+
+.calendar-floating-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px 5px 0;
+  border-style: solid;
+  border-color: var(--ink) transparent transparent;
 }
 
 /* MOBILE MODE STYLES */
@@ -1214,8 +1245,16 @@ body.mobile-mode .layout-card .legend {
   display: none;
 }
 
-body.mobile-mode .room-label {
-  font-size: 14px !important;
+body.mobile-mode .room-text {
+  font-size: 16px !important;
+}
+
+body.mobile-mode .room-text-utility {
+  font-size: 15px !important;
+}
+
+body.mobile-mode .building-label {
+  font-size: 17px !important;
 }
 
 body.mobile-mode .timeline-matrix-table th:first-child,
