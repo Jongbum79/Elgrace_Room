@@ -733,6 +733,9 @@ body {
   padding: 0 12px;
   border-right: 2px solid var(--line);
 }
+.timeline-matrix-table td:first-child {
+  font-size: 13px; /* 2 steps larger than standard 11px */
+}
 
 .timeline-matrix-table th {
   background: #FAFAF7;
@@ -1151,4 +1154,22 @@ body.mobile-mode .svg-viewport-wrapper {
 body.mobile-mode .reservation-popover {
   width: 250px;
   padding: 12px;
+}
+
+/* Quick purpose chip buttons */
+.quick-purpose-chip {
+  font-size: 10px;
+  font-weight: 800;
+  background: #F3F4F6;
+  color: #4B5563;
+  border: 1px solid #E5E7EB;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+.quick-purpose-chip:hover {
+  background: var(--mint);
+  color: var(--forest);
+  border-color: var(--forest);
 }

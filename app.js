@@ -1201,6 +1201,17 @@ function setupEventListeners() {
   document.getElementById("modal-cancel-btn").addEventListener("click", closeReservationModal);
   document.getElementById("modal-confirm-btn").addEventListener("click", submitReservation);
   
+  // 자주 쓰는 사용 목적 칩 바인딩
+  document.querySelectorAll(".quick-purpose-chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      const input = document.getElementById("modal-title-input");
+      if (input) {
+        input.value = chip.dataset.text;
+        input.focus();
+      }
+    });
+  });
+  
   // 모달 외부 영역(오버레이 배경) 클릭 시 닫기
   document.getElementById("reservation-modal").addEventListener("click", (e) => {
     if (e.target.id === "reservation-modal") {

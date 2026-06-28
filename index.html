@@ -304,7 +304,13 @@
         
         <!-- Purpose form -->
         <div class="form-group">
-          <label for="modal-title-input" class="block text-xs font-semibold text-gray-600 mb-1">사용 목적</label>
+          <div class="flex items-center justify-between mb-1">
+            <label for="modal-title-input" class="block text-xs font-semibold text-gray-600">사용 목적</label>
+            <div class="flex gap-1.5">
+              <button type="button" class="quick-purpose-chip" data-text="자매조 조모임">🌸 자매조 조모임</button>
+              <button type="button" class="quick-purpose-chip" data-text="청년부 전체모임">⚡ 청년부 전체모임</button>
+            </div>
+          </div>
           <input type="text" id="modal-title-input" placeholder="어떤 용도인지 적어주세요. (예: 중고등부 연습)"
                  class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-600">
         </div>
