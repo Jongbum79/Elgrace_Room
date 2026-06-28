@@ -15,6 +15,8 @@ const SUPABASE_KEY = "sb_publishable_T2c0JzATeQOwCtqHAb3g1w_v1m22LpN";
 const KAKAO_APP_KEY = "a4b38a08f325d15080d80e9979d04ee7"; // 카카오 자바스크립트 키 (입력 시 실연동 작동)
 
 let supabaseClient = null;
+let reservationRealtimeChannel = null;
+let realtimeRefreshTimer = null;
 let roomLayout = null; // room_layout_data.json 저장용
 let reservations = []; // Supabase에서 로드된 예약 리스트
 
@@ -60,6 +62,10 @@ function reservationOverlapsSlot(reservation, slotIdx) {
   return reservationStart < slotEnd && reservationEnd > slotStart;
 }
 
+function reservationsOverlap(aStartTime, aEndTime, bStartTime, bEndTime) {
+  return timeToMinutes(aStartTime) < timeToMinutes(bEndTime) && timeToMinutes(aEndTime) > timeToMinutes(bStartTime);
+}
+
 // 2. 초기화 작업
 document.addEventListener("DOMContentLoaded", async () => {
   initSupabase();
@@ -81,9 +87,36 @@ function initSupabase() {
   if (window.supabase) {
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     console.log("Supabase 초기화 완료");
+    subscribeReservationRealtime();
   } else {
     console.error("Supabase SDK를 로드할 수 없습니다.");
   }
+}
+
+function subscribeReservationRealtime() {
+  if (!supabaseClient || reservationRealtimeChannel) return;
+  
+  reservationRealtimeChannel = supabaseClient
+    .channel("room_reservations_live")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "room_reservations" },
+      () => {
+        scheduleRealtimeRefresh();
+      }
+    )
+    .subscribe(status => {
+      console.log("예약 실시간 구독 상태:", status);
+    });
+}
+
+function scheduleRealtimeRefresh() {
+  clearTimeout(realtimeRefreshTimer);
+  realtimeRefreshTimer = setTimeout(async () => {
+    await refreshData({ silent: true });
+    renderAll();
+    showToast("예약 현황이 실시간 갱신되었습니다.");
+  }, 250);
 }
 
 // 카카오 SDK 초기화
@@ -148,11 +181,12 @@ async function loadRoomLayout() {
 }
 
 // Supabase 예약 데이터 페치 (현재 달 및 인접 기간 데이터 조회)
-async function refreshData() {
+async function refreshData(options = {}) {
   if (!supabaseClient) return;
   
   const refreshBtn = document.getElementById("refresh-btn");
-  if (refreshBtn) refreshBtn.classList.add("spinning");
+  const silent = options.silent === true;
+  if (refreshBtn && !silent) refreshBtn.classList.add("spinning");
   
   try {
     // 현재 보고 있는 달의 1일과 마지막 날 계산
@@ -175,9 +209,9 @@ async function refreshData() {
     console.log("예약 데이터 페치 완료:", reservations.length, "건");
   } catch (error) {
     console.error("예약 데이터 페치 에러:", error);
-    showToast("예약 현황을 불러오지 못했습니다.");
+    if (!silent) showToast("예약 현황을 불러오지 못했습니다.");
   } finally {
-    if (refreshBtn) {
+    if (refreshBtn && !silent) {
       setTimeout(() => refreshBtn.classList.remove("spinning"), 500);
     }
   }
@@ -1118,6 +1152,26 @@ async function submitReservation() {
   };
   
   try {
+    const { data: latestRoomReservations, error: conflictFetchError } = await supabaseClient
+      .from("room_reservations")
+      .select("*")
+      .eq("room_id", selectedModalRoom.id)
+      .eq("date", selectedDateStr);
+      
+    if (conflictFetchError) throw conflictFetchError;
+    
+    const conflictingReservation = (latestRoomReservations || []).find(res => {
+      return reservationsOverlap(startTime, endTime, res.start_time, res.end_time);
+    });
+    
+    if (conflictingReservation) {
+      showToast("방금 다른 사용자가 해당 시간대를 예약했습니다. 최신 현황으로 갱신합니다.");
+      closeReservationModal();
+      await refreshData();
+      renderAll();
+      return;
+    }
+    
     const { data, error } = await supabaseClient
       .from("room_reservations")
       .insert([payload]);
@@ -1132,7 +1186,14 @@ async function submitReservation() {
     renderAll();
   } catch (error) {
     console.error("예약 생성 에러:", error);
-    showToast("예약을 처리하는 동안 오류가 발생했습니다.");
+    const errorMessage = error && error.message ? error.message : "";
+    if (errorMessage.includes("이미 예약된 시간대")) {
+      showToast("방금 다른 사용자가 해당 시간대를 예약했습니다. 최신 현황으로 갱신합니다.");
+      await refreshData();
+      renderAll();
+    } else {
+      showToast("예약을 처리하는 동안 오류가 발생했습니다.");
+    }
   }
 }
 
