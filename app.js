@@ -842,8 +842,8 @@ let dragStartSlotIdx = -1;
 let dragEndSlotIdx = -1;
 let dragRoomId = "";
 const TIMELINE_TOUCH_Y_TOLERANCE = 36;
-const TIMELINE_LONG_PRESS_MS = 450;
-const TIMELINE_TOUCH_CANCEL_DISTANCE = 10;
+const TIMELINE_LONG_PRESS_MS = 350;
+const TIMELINE_TOUCH_CANCEL_DISTANCE = 24;
 let timelineLongPressTimer = null;
 let pendingTimelineTouch = null;
 
@@ -970,6 +970,12 @@ function renderTimelineMatrix() {
         tdCell.addEventListener("touchmove", (e) => {
           updateTimelineDragSelectionFromTouch(e);
         }, { passive: false });
+        
+        tdCell.addEventListener("contextmenu", (e) => {
+          if (isTimelineDragging || pendingTimelineTouch) {
+            e.preventDefault();
+          }
+        });
       }
       
       row.appendChild(tdCell);
@@ -995,7 +1001,10 @@ function scheduleTimelineLongPressSelection(e, roomId, slotIdx) {
   
   timelineLongPressTimer = setTimeout(() => {
     if (!pendingTimelineTouch) return;
-    beginTimelineDragSelection(roomId, slotIdx);
+    const started = beginTimelineDragSelection(roomId, slotIdx);
+    if (started && window.navigator && window.navigator.vibrate) {
+      window.navigator.vibrate(12);
+    }
     pendingTimelineTouch = null;
   }, TIMELINE_LONG_PRESS_MS);
 }
