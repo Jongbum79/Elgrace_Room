@@ -379,15 +379,15 @@ function getRelativeMonth(offset) {
 // 6. SVG 도면 그리며 예약 상태 채우기
 function renderRoomLayout() {
   const svg = document.getElementById("room-layout-svg");
-  const popover = document.getElementById("reservation-popover");
+  const modal = document.getElementById("reservation-modal");
   
   if (!svg || !roomLayout) return;
   
   // 기존 동적 콘텐츠 클리어 (정적 엘리먼트 외 청소)
   svg.innerHTML = "";
   
-  // 예약 팝오버 닫기
-  popover.classList.add("hidden");
+  // 예약 모달 닫기
+  modal.classList.add("hidden");
   
   // 날짜 기준 예약 가용 슬롯 계산을 위해 현재 선택 날짜의 예약 리스트 확보
   const dateReservations = reservations.filter(res => res.date === selectedDateStr);
@@ -460,7 +460,7 @@ function renderRoomLayout() {
     if (r.is_reservable) {
       rect.addEventListener("click", (e) => {
         e.stopPropagation();
-        openReservationPopover(r, e);
+        openReservationModal(r);
       });
     }
     
@@ -481,35 +481,35 @@ function renderRoomLayout() {
   });
 }
 
-// 7. 예약 시간 선택용 floating 팝오버 관리
-let selectedPopoverSlots = [];
-let selectedPopoverRoom = null;
+// 7. 예약 시간 선택용 모달 다이얼로그 관리
+let selectedModalSlots = [];
+let selectedModalRoom = null;
 let isDraggingSlots = false;
 
-function openReservationPopover(room, event) {
+function openReservationModal(room) {
   if (!checkLogin()) return;
   
-  selectedPopoverRoom = room;
-  selectedPopoverSlots = [];
+  selectedModalRoom = room;
+  selectedModalSlots = [];
   
-  const popover = document.getElementById("reservation-popover");
-  const popoverRoomName = document.getElementById("popover-room-name");
-  const popoverDate = document.getElementById("popover-date");
-  const popoverSlotsGrid = document.getElementById("popover-slots-grid");
-  const titleInput = document.getElementById("popover-title-input");
+  const modal = document.getElementById("reservation-modal");
+  const modalRoomName = document.getElementById("modal-room-name");
+  const modalDate = document.getElementById("modal-date");
+  const modalSlotsGrid = document.getElementById("modal-slots-grid");
+  const titleInput = document.getElementById("modal-title-input");
   
   // 타이틀 초기화
   titleInput.value = "";
   
   // 메타 정보 표시
-  popoverRoomName.textContent = room.text;
-  popoverDate.textContent = selectedDateStr;
+  modalRoomName.textContent = room.text;
+  modalDate.textContent = selectedDateStr;
   
   // 현재 날짜/방의 예약 상황 추출
   const roomRes = reservations.filter(res => res.date === selectedDateStr && res.room_id === room.id);
   
   // 30분 단위 슬롯 생성
-  popoverSlotsGrid.innerHTML = "";
+  modalSlotsGrid.innerHTML = "";
   
   TIME_SLOTS.forEach(time => {
     const chip = document.createElement("div");
@@ -546,64 +546,34 @@ function openReservationPopover(room, event) {
       });
     }
     
-    popoverSlotsGrid.appendChild(chip);
+    modalSlotsGrid.appendChild(chip);
   });
   
-  // 팝오버 위치 결정
-  popover.classList.remove("hidden");
-  
-  // 클릭한 사각형 좌표 얻기
-  const svg = document.getElementById("room-layout-svg");
-  const svgRect = svg.getBoundingClientRect();
-  const scaleX = svgRect.width / 1000;
-  const scaleY = svgRect.height / 595;
-  
-  // 방 사각형 중앙 좌표 계산
-  const roomCenterX = (room.x + room.width / 2) * scaleX;
-  const roomCenterY = room.y * scaleY;
-  
-  // 팝오버 배치 오프셋 계산 (중앙 정렬)
-  popover.style.left = `${roomCenterX - 140}px`; // width 280px / 2 = 140
-  
-  // 방 y좌표가 높으면 팝오버를 밑으로, 낮으면 위로 띄움
-  if (room.y < 250) {
-    popover.style.top = `${(room.y + room.height) * scaleY + 12}px`;
-    popover.className = "reservation-popover arrow-top";
-  } else {
-    popover.style.top = `${roomCenterY - popover.offsetHeight - 12}px`;
-    popover.className = "reservation-popover arrow-bottom";
-  }
-  
-  // 방이 화면 양옆으로 튀어나갈 경우 보정
-  const leftPx = parseFloat(popover.style.left);
-  if (leftPx < 10) {
-    popover.style.left = "10px";
-  } else if (leftPx + 290 > svgRect.width) {
-    popover.style.left = `${svgRect.width - 290}px`;
-  }
+  // 모달 띄우기
+  modal.classList.remove("hidden");
 }
 
 function toggleSlotSelection(time, chipElement) {
   if (chipElement.classList.contains("booked")) return;
   
-  const index = selectedPopoverSlots.indexOf(time);
+  const index = selectedModalSlots.indexOf(time);
   if (index === -1) {
-    selectedPopoverSlots.push(time);
+    selectedModalSlots.push(time);
     chipElement.classList.add("selected");
   } else {
-    selectedPopoverSlots.splice(index, 1);
+    selectedModalSlots.splice(index, 1);
     chipElement.classList.remove("selected");
   }
   
   // 선택 슬롯들 정렬
-  selectedPopoverSlots.sort((a, b) => TIME_SLOTS.indexOf(a) - TIME_SLOTS.indexOf(b));
+  selectedModalSlots.sort((a, b) => TIME_SLOTS.indexOf(a) - TIME_SLOTS.indexOf(b));
 }
 
-function closeReservationPopover() {
-  const popover = document.getElementById("reservation-popover");
-  popover.classList.add("hidden");
-  selectedPopoverRoom = null;
-  selectedPopoverSlots = [];
+function closeReservationModal() {
+  const modal = document.getElementById("reservation-modal");
+  modal.classList.add("hidden");
+  selectedModalRoom = null;
+  selectedModalSlots = [];
 }
 
 // 8. 하단 타임라인 예약 매트릭스 렌더링
@@ -714,6 +684,12 @@ function renderTimelineMatrix() {
         // 드래그를 통한 시간 선택 예약 기능
         tdCell.addEventListener("mousedown", (e) => {
           if (!checkLogin()) return;
+          
+          // 기존 선택된 셀의 하이라이트 해제
+          document.querySelectorAll(".matrix-cell").forEach(cell => {
+            cell.classList.remove("drag-selecting");
+          });
+          
           isTimelineDragging = true;
           dragRoomId = room.id;
           dragStartSlotIdx = idx;
@@ -783,14 +759,11 @@ function handleTimelineDragEnd() {
       showToast("이미 예약된 시간대가 포함되어 있습니다.");
       renderTimelineMatrix(); // 하이라이트 초기화용 재렌더링
     } else {
-      // 해당 방 기준으로 예약 popover 트리거 및 슬롯 설정
-      openReservationPopover(room, {
-        stopPropagation: () => {},
-        preventDefault: () => {}
-      });
+      // 해당 방 기준으로 예약 모달 트리거 및 슬롯 설정
+      openReservationModal(room);
       
-      // 팝오버의 칩 선택 상태 동기화
-      selectedPopoverSlots = dragSlots;
+      // 모달의 칩 선택 상태 동기화
+      selectedModalSlots = dragSlots;
       document.querySelectorAll(".time-slot-chip").forEach(chip => {
         const time = chip.dataset.time;
         if (dragSlots.includes(time)) {
@@ -827,12 +800,12 @@ function highlightTimelineDragSelection(roomId) {
 // 9. 예약 삽입 (Supabase INSERT)
 async function submitReservation() {
   if (!checkLogin()) return;
-  if (!selectedPopoverRoom) return;
+  if (!selectedModalRoom) return;
   
-  const titleInput = document.getElementById("popover-title-input");
+  const titleInput = document.getElementById("modal-title-input");
   const title = titleInput.value.trim();
   
-  if (selectedPopoverSlots.length === 0) {
+  if (selectedModalSlots.length === 0) {
     showToast("예약할 시간 슬롯을 드래그 또는 클릭하여 선택하십시오.");
     return;
   }
@@ -844,10 +817,10 @@ async function submitReservation() {
   }
   
   // 시작 시간과 종료 시간 유추 (연속된 시간의 최솟값 ~ 최댓값 + 30분)
-  selectedPopoverSlots.sort((a, b) => TIME_SLOTS.indexOf(a) - TIME_SLOTS.indexOf(b));
+  selectedModalSlots.sort((a, b) => TIME_SLOTS.indexOf(a) - TIME_SLOTS.indexOf(b));
   
   // 연속성 검증
-  const indices = selectedPopoverSlots.map(t => TIME_SLOTS.indexOf(t));
+  const indices = selectedModalSlots.map(t => TIME_SLOTS.indexOf(t));
   for (let i = 0; i < indices.length - 1; i++) {
     if (indices[i + 1] - indices[i] !== 1) {
       showToast("예약은 중단 없이 연속된 시간대만 선택 가능합니다.");
@@ -855,8 +828,8 @@ async function submitReservation() {
     }
   }
   
-  const startTime = selectedPopoverSlots[0];
-  const lastSelectedIdx = TIME_SLOTS.indexOf(selectedPopoverSlots[selectedPopoverSlots.length - 1]);
+  const startTime = selectedModalSlots[0];
+  const lastSelectedIdx = TIME_SLOTS.indexOf(selectedModalSlots[selectedModalSlots.length - 1]);
   
   // 종료 시간은 마지막 선택 슬롯의 30분 뒤
   let endTime = "";
@@ -867,8 +840,8 @@ async function submitReservation() {
   }
   
   const payload = {
-    room_id: selectedPopoverRoom.id,
-    room_name: selectedPopoverRoom.text,
+    room_id: selectedModalRoom.id,
+    room_name: selectedModalRoom.text,
     date: selectedDateStr,
     start_time: startTime,
     end_time: endTime,
@@ -885,7 +858,7 @@ async function submitReservation() {
     if (error) throw error;
     
     showToast("예약이 성공적으로 등록되었습니다.");
-    closeReservationPopover();
+    closeReservationModal();
     
     // 데이터 새로고침 및 UI 갱신
     await refreshData();
@@ -909,6 +882,10 @@ function showReservationDetail(res) {
   const user = document.getElementById("detail-user");
   const delBtn = document.getElementById("detail-delete-btn");
   
+  // 커스텀 확인 창 리셋
+  document.getElementById("detail-view-container").classList.remove("hidden");
+  document.getElementById("detail-confirm-container").classList.add("hidden");
+  
   roomName.textContent = res.room_name;
   dateTime.textContent = `${res.date}  |  ${res.start_time} ~ ${res.end_time}`;
   title.textContent = res.title;
@@ -924,15 +901,13 @@ function showReservationDetail(res) {
   modal.classList.remove("hidden");
 }
 
-async function cancelReservation() {
+async function cancelReservationSilent() {
   if (!activeReservationForDetail || !checkLogin()) return;
   
   if (activeReservationForDetail.user_id !== currentUser.id) {
     showToast("본인의 예약만 취소할 수 있습니다.");
     return;
   }
-  
-  if (!confirm("정말로 이 예약을 취소하시겠습니까?")) return;
   
   try {
     const { error } = await supabaseClient
@@ -986,8 +961,8 @@ function renderAll() {
 
 function checkLogin() {
   if (!currentUser) {
-    // 팝오버 닫고 로그인 유도
-    closeReservationPopover();
+    // 모달 닫고 로그인 유도
+    closeReservationModal();
     showToast("로그인이 필요한 서비스입니다.");
     openMockLoginModal();
     return false;
@@ -1077,19 +1052,15 @@ function setupEventListeners() {
     showToast("예약 현황이 갱신되었습니다.");
   });
   
-  // 팝오버 폼 이벤트 바인딩
-  document.getElementById("popover-close-btn").addEventListener("click", closeReservationPopover);
-  document.getElementById("popover-cancel-btn").addEventListener("click", closeReservationPopover);
-  document.getElementById("popover-confirm-btn").addEventListener("click", submitReservation);
+  // 예약 모달 폼 이벤트 바인딩
+  document.getElementById("modal-close-btn").addEventListener("click", closeReservationModal);
+  document.getElementById("modal-cancel-btn").addEventListener("click", closeReservationModal);
+  document.getElementById("modal-confirm-btn").addEventListener("click", submitReservation);
   
-  // 팝오버 외부 영역 클릭 시 닫기
-  document.addEventListener("click", (e) => {
-    const popover = document.getElementById("reservation-popover");
-    if (!popover.classList.contains("hidden") && !popover.contains(e.target)) {
-      // SVG 내 도형을 클릭한 게 아니라면 닫기
-      if (!e.target.classList.contains("room-shape")) {
-        closeReservationPopover();
-      }
+  // 모달 외부 영역(오버레이 배경) 클릭 시 닫기
+  document.getElementById("reservation-modal").addEventListener("click", (e) => {
+    if (e.target.id === "reservation-modal") {
+      closeReservationModal();
     }
   });
   
@@ -1105,7 +1076,22 @@ function setupEventListeners() {
   document.getElementById("detail-close-btn").addEventListener("click", () => {
     document.getElementById("reservation-detail-modal").classList.add("hidden");
   });
-  document.getElementById("detail-delete-btn").addEventListener("click", cancelReservation);
+  document.getElementById("detail-delete-btn").addEventListener("click", () => {
+    document.getElementById("detail-view-container").classList.add("hidden");
+    document.getElementById("detail-confirm-container").classList.remove("hidden");
+  });
+  document.getElementById("detail-confirm-no-btn").addEventListener("click", () => {
+    document.getElementById("detail-confirm-container").classList.add("hidden");
+    document.getElementById("detail-view-container").classList.remove("hidden");
+  });
+  document.getElementById("detail-confirm-yes-btn").addEventListener("click", cancelReservationSilent);
+  
+  // 상세조회 모달 외부 영역(오버레이 배경) 클릭 시 닫기
+  document.getElementById("reservation-detail-modal").addEventListener("click", (e) => {
+    if (e.target.id === "reservation-detail-modal") {
+      document.getElementById("reservation-detail-modal").classList.add("hidden");
+    }
+  });
   
   // 전역 마우스 업 감지하여 드래그 상태 해제
   document.addEventListener("mouseup", () => {
