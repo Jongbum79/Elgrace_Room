@@ -12,7 +12,7 @@
 // 1. 설정 및 전역 상태 변수
 const SUPABASE_URL = "https://jayobvddlaygmgwfkuhv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_T2c0JzATeQOwCtqHAb3g1w_v1m22LpN";
-const KAKAO_APP_KEY = ""; // 카카오 자바스크립트 키 (입력 시 실연동 작동)
+const KAKAO_APP_KEY = "a4b38a08f325d15080d80e9979d04ee7"; // 카카오 자바스크립트 키 (입력 시 실연동 작동)
 
 let supabaseClient = null;
 let roomLayout = null; // room_layout_data.json 저장용
