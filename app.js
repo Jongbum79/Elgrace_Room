@@ -524,6 +524,14 @@ let selectedModalSlots = [];
 let selectedModalRoom = null;
 let isDraggingSlots = false;
 let lastTouchedSlotTime = "";
+let touchDragAnchorSlotIdx = -1;
+const TOUCH_SLOT_Y_TOLERANCE = 56;
+const ADMIN_NICKNAMES = ["최종범"];
+
+function isCurrentUserAdmin() {
+  if (!currentUser) return false;
+  return ADMIN_NICKNAMES.includes((currentUser.nickname || "").trim());
+}
 
 function openReservationModal(room) {
   if (!checkLogin()) return;
@@ -613,7 +621,8 @@ function openReservationModal(room) {
       chip.addEventListener("touchstart", (e) => {
         isDraggingSlots = true;
         lastTouchedSlotTime = time;
-        toggleSlotSelection(time, chip);
+        touchDragAnchorSlotIdx = TIME_SLOTS.indexOf(time);
+        setModalSlotRangeSelection(touchDragAnchorSlotIdx, touchDragAnchorSlotIdx);
         e.preventDefault();
       }, { passive: false });
       
@@ -624,14 +633,13 @@ function openReservationModal(room) {
         const touch = e.touches[0];
         if (!touch) return;
         
-        const target = document.elementFromPoint(touch.clientX, touch.clientY);
-        const targetChip = target ? target.closest("#modal-slots-grid .time-slot-chip") : null;
-        if (!targetChip || targetChip.classList.contains("booked")) return;
+        const targetChip = getSlotChipFromTouchPoint(touch.clientX, touch.clientY);
+        if (!targetChip) return;
         
         const targetTime = targetChip.dataset.time;
         if (targetTime && targetTime !== lastTouchedSlotTime) {
           lastTouchedSlotTime = targetTime;
-          toggleSlotSelection(targetTime, targetChip);
+          setModalSlotRangeSelection(touchDragAnchorSlotIdx, TIME_SLOTS.indexOf(targetTime));
         }
       }, { passive: false });
     }
@@ -642,6 +650,48 @@ function openReservationModal(room) {
   // 모달 띄우기
   updateModalTimelineTooltip();
   modal.classList.remove("hidden");
+}
+
+function getSlotChipFromTouchPoint(clientX, clientY) {
+  const slotsGrid = document.getElementById("modal-slots-grid");
+  if (!slotsGrid) return null;
+  
+  const rect = slotsGrid.getBoundingClientRect();
+  const isWithinYRange = clientY >= rect.top - TOUCH_SLOT_Y_TOLERANCE && clientY <= rect.bottom + TOUCH_SLOT_Y_TOLERANCE;
+  if (!isWithinYRange) return null;
+  
+  const clampedX = Math.min(Math.max(clientX, rect.left), rect.right - 1);
+  const slotWidth = rect.width / TIME_SLOTS.length;
+  const slotIdx = Math.min(TIME_SLOTS.length - 1, Math.max(0, Math.floor((clampedX - rect.left) / slotWidth)));
+  return slotsGrid.querySelector(`.time-slot-chip[data-time="${TIME_SLOTS[slotIdx]}"]`);
+}
+
+function setModalSlotRangeSelection(anchorIdx, currentIdx) {
+  if (anchorIdx < 0 || currentIdx < 0) return;
+  
+  const minIdx = Math.min(anchorIdx, currentIdx);
+  const maxIdx = Math.max(anchorIdx, currentIdx);
+  const chips = Array.from(document.querySelectorAll("#modal-slots-grid .time-slot-chip"));
+  const rangeChips = chips.filter(chip => {
+    const idx = TIME_SLOTS.indexOf(chip.dataset.time);
+    return idx >= minIdx && idx <= maxIdx;
+  });
+  
+  if (rangeChips.some(chip => chip.classList.contains("booked"))) {
+    showToast("이미 예약된 시간대가 포함되어 있습니다.");
+    return;
+  }
+  
+  chips.forEach(chip => chip.classList.remove("selected"));
+  selectedModalSlots = [];
+  
+  rangeChips.forEach(chip => {
+    chip.classList.add("selected");
+    selectedModalSlots.push(chip.dataset.time);
+  });
+  
+  selectedModalSlots.sort((a, b) => TIME_SLOTS.indexOf(a) - TIME_SLOTS.indexOf(b));
+  updateModalTimelineTooltip();
 }
 
 function toggleSlotSelection(time, chipElement) {
@@ -711,6 +761,7 @@ function closeReservationModal() {
   selectedModalRoom = null;
   selectedModalSlots = [];
   lastTouchedSlotTime = "";
+  touchDragAnchorSlotIdx = -1;
   updateModalTimelineTooltip();
 }
 
@@ -1102,9 +1153,10 @@ function showReservationDetail(res) {
   title.textContent = res.title;
   user.textContent = res.reserved_by;
   
-  // 본인의 예약이면서 오늘 또는 미래 날짜인 경우에만 취소 활성화 (지난 예약은 변경 불가)
+  // 본인 또는 관리자의 예약이며 오늘 또는 미래 날짜인 경우에만 취소 활성화 (지난 예약은 변경 불가)
   const todayStr = formatDate(new Date());
-  if (currentUser && res.user_id === currentUser.id && res.date >= todayStr) {
+  const canDeleteReservation = currentUser && (res.user_id === currentUser.id || isCurrentUserAdmin()) && res.date >= todayStr;
+  if (canDeleteReservation) {
     delBtn.classList.remove("hidden");
   } else {
     delBtn.classList.add("hidden");
@@ -1116,8 +1168,8 @@ function showReservationDetail(res) {
 async function cancelReservationSilent() {
   if (!activeReservationForDetail || !checkLogin()) return;
   
-  if (activeReservationForDetail.user_id !== currentUser.id) {
-    showToast("본인의 예약만 취소할 수 있습니다.");
+  if (activeReservationForDetail.user_id !== currentUser.id && !isCurrentUserAdmin()) {
+    showToast("본인의 예약만 취소할 수 있습니다. 관리자는 모든 예약을 취소할 수 있습니다.");
     return;
   }
   
@@ -1374,6 +1426,13 @@ function setupEventListeners() {
   document.addEventListener("touchend", () => {
     isDraggingSlots = false;
     lastTouchedSlotTime = "";
+    touchDragAnchorSlotIdx = -1;
+  });
+  
+  document.addEventListener("touchcancel", () => {
+    isDraggingSlots = false;
+    lastTouchedSlotTime = "";
+    touchDragAnchorSlotIdx = -1;
   });
   
   // 하단 타임라인 날짜 네비게이션 버튼 바인딩

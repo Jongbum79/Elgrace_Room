@@ -1245,6 +1245,20 @@ body.mobile-mode .layout-card .legend {
   display: none;
 }
 
+body.mobile-mode .timeline-card .card-header h2 {
+  font-size: 0;
+}
+
+body.mobile-mode .timeline-card .card-header h2::after {
+  content: '시간대별 현황';
+  font-size: 16px;
+  font-weight: 700;
+}
+
+body.mobile-mode .timeline-card .subtitle {
+  display: none;
+}
+
 body.mobile-mode .room-text {
   font-size: 18px !important;
 }
