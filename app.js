@@ -258,7 +258,8 @@ function handleRealKakaoLogin() {
       },
       fail: function(err) {
         console.error("Kakao Auth 에러:", err);
-        showToast("카카오 로그인을 완료하지 못했습니다.");
+        const errMsg = err ? (err.error_description || err.error || JSON.stringify(err)) : "알 수 없는 오류";
+        showToast("카카오 로그인 실패: " + errMsg);
       }
     });
   } catch (e) {
