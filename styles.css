@@ -1,0 +1,1001 @@
+/* 
+ * 주은혜교회 공간예약시스템 프리미엄 스타일시트
+ * Elgrace_Summer의 Apple & Linear 디자인 컨셉을 계승합니다.
+ */
+
+:root {
+  --ink: #1A1A1A;
+  --muted: #666666;
+  --line: rgba(20, 26, 23, 0.08);
+  --soft-line: rgba(20, 26, 23, 0.04);
+  --background: #F7F7F4;
+  --card: #ffffff;
+  
+  /* Forest & Sage Neutrals */
+  --forest: #184E3A;
+  --forest-dark: #0F3A2A;
+  --sage: #DDE8E1;
+  --mint: #F0F5F2;
+  
+  /* Status Colors */
+  --orange: #f7a45c;
+  --blue: #4b8cd6;
+  --pink: #d9879f;
+  --yellow: #e3bf62;
+  --purple: #917bb7;
+  
+  --status-full: #BD7D78;
+  --status-full-fg: #7C4A46;
+  --status-full-bg: #F5E9E7;
+  --status-full-border: #E4C6C2;
+  
+  --status-partial: #B99655;
+  --status-partial-fg: #6F5427;
+  --status-partial-bg: #F6EFE1;
+  --status-partial-border: #E4D2AD;
+  
+  --status-available: #5F8B70;
+  --status-available-fg: #2F5F45;
+  --status-available-bg: #E8F1EB;
+  --status-available-border: #C9DCCD;
+  
+  --shadow: 0 8px 24px rgba(15, 23, 42, 0.045);
+  --focus-ring: 0 0 0 3px rgba(24, 78, 58, 0.18);
+  --ease-premium: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Base resets */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--background);
+  font-family: "Pretendard", "system-ui", -apple-system, sans-serif;
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  line-height: 1.5;
+}
+
+/* App Shell Layout */
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Topbar / Header */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: #FAFAF7;
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  transition: all 0.2s ease;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-titles h1 {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--ink);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.header-titles .eyebrow {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin: 0 0 2px 0;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* View Mode Switcher */
+.view-mode-switch {
+  display: inline-flex;
+  background: rgba(20, 26, 23, 0.05);
+  padding: 3px;
+  border-radius: 8px;
+}
+
+.view-mode-button {
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  border-radius: 6px;
+  transition: all 0.15s var(--ease-premium);
+  background: transparent;
+  border: 0;
+}
+
+.view-mode-button.active {
+  background: var(--card);
+  color: var(--forest);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* Auth Profile Widget */
+.auth-widget {
+  display: flex;
+  align-items: center;
+}
+
+.btn-kakao-login {
+  background: #FEE500;
+  color: #191919;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: opacity 0.15s ease;
+  border: none;
+}
+
+.btn-kakao-login:hover {
+  opacity: 0.9;
+}
+
+.kakao-icon {
+  font-size: 16px;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--mint);
+  border: 1px solid var(--sage);
+  padding: 4px 8px 4px 6px;
+  border-radius: 20px;
+}
+
+.user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: white;
+  border: 1px solid rgba(0,0,0,0.05);
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.user-role {
+  font-size: 9px;
+  color: var(--muted);
+  line-height: 1.1;
+  font-weight: 500;
+}
+
+.btn-logout {
+  background: transparent;
+  color: var(--muted);
+  border: 0;
+  padding: 4px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.btn-logout:hover {
+  background: rgba(224, 90, 78, 0.1);
+  color: var(--status-full-fg);
+}
+
+.btn-logout svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Main Content Area */
+.main-content {
+  flex: 1;
+  padding: 24px;
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Cards layout matching Elgrace_Summer */
+.card {
+  background: var(--card);
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.card-header {
+  margin-bottom: 20px;
+}
+
+.card-header h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+}
+
+.card-header .subtitle {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 2px 0 0 0;
+}
+
+/* Legend Box */
+.legend-box {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+/* Calendar styling */
+.calendar-card {
+  min-height: 480px;
+}
+
+.month-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--forest);
+}
+
+.ctrl-btn, .refresh-btn {
+  background: rgba(20, 26, 23, 0.04);
+  color: var(--forest);
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.ctrl-btn:hover, .refresh-btn:hover {
+  background: rgba(20, 26, 23, 0.08);
+}
+
+.ctrl-btn svg, .refresh-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.refresh-btn.spinning svg {
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Calendar Grid */
+.calendar-grid-container {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
+}
+
+.calendar-weekday-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: #FAFAF7;
+  border-bottom: 1px solid var(--line);
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  padding: 8px 0;
+}
+
+.calendar-weekday-header .sunday {
+  color: #e05a4e;
+}
+
+.calendar-weekday-header .saturday {
+  color: var(--blue);
+}
+
+.calendar-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: minmax(90px, auto);
+}
+
+.calendar-day {
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: background 0.15s ease;
+  position: relative;
+  min-height: 90px;
+}
+
+.calendar-day:nth-child(7n) {
+  border-right: 0;
+}
+
+.calendar-day.prev-month,
+.calendar-day.next-month {
+  background: #FAFBF9;
+  opacity: 0.45;
+}
+
+.calendar-day-number {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.calendar-day:nth-child(7n+1) .calendar-day-number {
+  color: #e05a4e; /* Sunday */
+}
+
+.calendar-day:nth-child(7n) .calendar-day-number {
+  color: var(--blue); /* Saturday */
+}
+
+.calendar-day.active-day {
+  background: var(--mint);
+  border: 1.5px solid var(--forest);
+  border-radius: 6px;
+  z-index: 2;
+}
+
+.calendar-day.active-day .calendar-day-number {
+  color: var(--forest);
+}
+
+.calendar-day-reservations {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow-y: auto;
+  max-height: 80px;
+  padding-bottom: 2px;
+}
+
+/* Reservation Pill inside Calendar cell */
+.calendar-res-pill {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 2px 4px;
+  border-radius: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.calendar-res-pill:hover {
+  transform: scale(1.02);
+}
+
+.res-pill-blue {
+  background: #EAF2FB;
+  color: #2F65B6;
+  border: 1px solid #C4DDFC;
+}
+
+.res-pill-orange {
+  background: #FDF4EB;
+  color: #C07027;
+  border: 1px solid #F5DBBF;
+}
+
+.res-pill-emerald {
+  background: #E8F1EB;
+  color: #2F5F45;
+  border: 1px solid #C9DCCD;
+}
+
+/* SVG flatplan styling */
+.svg-viewport-wrapper {
+  overflow-x: auto;
+  padding: 10px 0;
+  display: flex;
+  justify-content: center;
+  background: #FAFBF9;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+}
+
+.svg-container {
+  width: 100%;
+  max-width: 1000px;
+  position: relative;
+  aspect-ratio: 1000/595;
+}
+
+#room-layout-svg {
+  display: block;
+}
+
+/* Bounding wrappers inside SVG */
+.building-border {
+  fill: #F4F5F0;
+  stroke: var(--line);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+}
+
+.building-label {
+  font-size: 11px;
+  font-weight: 800;
+  fill: var(--muted);
+  letter-spacing: 0.05em;
+}
+
+/* Room shapes SVG classes */
+.room-shape {
+  fill: #FFFFFF;
+  stroke: #CBD0CC;
+  stroke-width: 1.2;
+  transition: all 0.2s var(--ease-premium);
+  cursor: pointer;
+}
+
+.room-shape:hover {
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.05));
+  stroke: var(--forest);
+  stroke-width: 1.8;
+}
+
+/* Room state coloring */
+.room-shape.status-available {
+  fill: #FFFFFF;
+}
+
+.room-shape.status-partial {
+  fill: #FCF5EC;
+  stroke: #E5C397;
+}
+
+.room-shape.status-full {
+  fill: #FAECEB;
+  stroke: #E6BAB7;
+}
+
+.room-shape.status-utility {
+  fill: #ECECE9;
+  stroke: #D2D2CD;
+  cursor: not-allowed;
+}
+
+.room-shape.status-utility:hover {
+  stroke: #D2D2CD;
+  stroke-width: 1.2;
+  filter: none;
+}
+
+/* Room labels inside SVG */
+.room-text {
+  font-size: 10px;
+  font-weight: 700;
+  fill: var(--ink);
+  pointer-events: none;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.room-text-utility {
+  fill: #80807A;
+}
+
+/* Floating Tooltip Popover Form */
+.reservation-popover {
+  position: absolute;
+  background: var(--card);
+  border: 1px solid var(--line);
+  box-shadow: 0 10px 32px rgba(15, 23, 42, 0.12);
+  border-radius: 12px;
+  width: 280px;
+  padding: 16px;
+  z-index: 100;
+  pointer-events: auto;
+  transition: opacity 0.15s ease;
+}
+
+.popover-arrow {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: var(--card);
+  border-left: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  transform: rotate(-45deg);
+  z-index: -1;
+}
+
+/* Directional arrows */
+.reservation-popover.arrow-bottom .popover-arrow {
+  bottom: -6px;
+  left: calc(50% - 6px);
+  border-left: 0;
+  border-top: 0;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.reservation-popover.arrow-top .popover-arrow {
+  top: -6px;
+  left: calc(50% - 6px);
+}
+
+.popover-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--soft-line);
+  padding-bottom: 8px;
+}
+
+.popover-header h3 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--forest);
+  margin: 0;
+}
+
+.popover-close {
+  background: transparent;
+  border: 0;
+  font-size: 16px;
+  color: var(--muted);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.reservation-popover .label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+/* Popover Time slots */
+.popover-slots-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  max-height: 150px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.time-slot-chip {
+  padding: 5px 0;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+  background: #FAFBF9;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--ink);
+  transition: all 0.1s ease;
+  user-select: none;
+  cursor: pointer;
+}
+
+.time-slot-chip:hover:not(.booked) {
+  border-color: var(--forest);
+  background: var(--mint);
+}
+
+.time-slot-chip.selected {
+  background: var(--forest);
+  color: white;
+  border-color: var(--forest);
+}
+
+.time-slot-chip.booked {
+  background: #FAF5F5;
+  color: #D2D2D2;
+  border-color: #EFEFEF;
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+
+.form-group label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.form-group input {
+  width: 100%;
+  font-size: 11px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  outline: none;
+  transition: border 0.15s ease;
+}
+
+.form-group input:focus {
+  border-color: var(--forest);
+}
+
+/* Premium timeline grid table */
+.timeline-card {
+  min-height: 400px;
+}
+
+.selected-date-badge {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--forest);
+  background: var(--sage);
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+.timeline-scroll-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: white;
+}
+
+.timeline-table-container {
+  width: 100%;
+  min-width: 900px;
+}
+
+.timeline-matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.timeline-matrix-table th, .timeline-matrix-table td {
+  border-bottom: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  padding: 0;
+  height: 48px;
+  text-align: center;
+  font-size: 11px;
+  vertical-align: middle;
+  position: relative;
+  user-select: none;
+}
+
+/* Sticky styles for room column */
+.timeline-matrix-table th:first-child,
+.timeline-matrix-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  background: #FAFAF7;
+  width: 160px;
+  font-weight: 700;
+  color: var(--forest);
+  text-align: left;
+  padding: 0 12px;
+  border-right: 2px solid var(--line);
+}
+
+.timeline-matrix-table th {
+  background: #FAFAF7;
+  height: 38px;
+  font-weight: 700;
+  color: var(--muted);
+  border-bottom: 2px solid var(--line);
+}
+
+.timeline-matrix-table th:first-child {
+  z-index: 20;
+}
+
+/* Matrix Cells */
+.matrix-cell {
+  background: #FFFFFF;
+  cursor: cell;
+  transition: background 0.1s ease;
+}
+
+.matrix-cell.drag-selecting {
+  background: rgba(24, 78, 58, 0.1);
+  border: 1px dashed var(--forest);
+}
+
+.matrix-cell.booked {
+  cursor: default;
+  background: #FAFBF9;
+}
+
+/* Reservation span bar inside grid cell */
+.matrix-booking-bar {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 2px;
+  right: 2px;
+  border-radius: 6px;
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  z-index: 2;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  transition: filter 0.15s ease;
+}
+
+.matrix-booking-bar:hover {
+  filter: brightness(0.95);
+}
+
+.bg-bar-blue {
+  background: #EAF2FB;
+  color: #2F65B6;
+  border: 1px solid #C4DDFC;
+}
+
+.bg-bar-orange {
+  background: #FDF4EB;
+  color: #C07027;
+  border: 1px solid #F5DBBF;
+}
+
+.bg-bar-emerald {
+  background: #E8F1EB;
+  color: #2F5F45;
+  border: 1px solid #C9DCCD;
+}
+
+/* Modal styling */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.15s var(--ease-premium);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-card {
+  background: var(--card);
+  border-radius: 16px;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.12);
+  width: 90%;
+  max-width: 440px;
+  padding: 24px;
+  position: relative;
+  animation: slideUp 0.25s var(--ease-premium);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(12px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.btn-primary {
+  background: var(--forest);
+  color: white;
+  font-weight: 700;
+  border: none;
+  transition: background 0.15s ease;
+}
+
+.btn-primary:hover {
+  background: var(--forest-dark);
+}
+
+.btn-secondary {
+  background: #FAFBF9;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-weight: 700;
+  transition: all 0.15s ease;
+}
+
+.btn-secondary:hover {
+  background: #FAFAF7;
+  color: var(--ink);
+}
+
+.btn-danger {
+  background: #e05a4e;
+  border: none;
+  font-weight: 700;
+  transition: background 0.15s ease;
+}
+
+.btn-danger:hover {
+  background: #c54a3e;
+}
+
+.btn-kakao-confirm {
+  background: #FEE500;
+  color: #191919;
+  font-weight: 700;
+  border: none;
+  transition: opacity 0.15s ease;
+}
+
+.btn-kakao-confirm:hover {
+  opacity: 0.9;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(40px);
+  background: var(--ink);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 2000;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s var(--ease-premium);
+}
+
+.toast.show {
+  opacity: 0.95;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* MOBILE MODE STYLES */
+body.mobile-mode .topbar {
+  padding: 12px 14px;
+  min-height: 56px;
+}
+
+body.mobile-mode .header-titles .eyebrow {
+  display: none;
+}
+
+body.mobile-mode .header-titles h1 {
+  font-size: 16px;
+}
+
+body.mobile-mode .logo-container {
+  padding: 4px 8px;
+}
+
+body.mobile-mode .main-content {
+  padding: 12px;
+  gap: 16px;
+}
+
+body.mobile-mode .card {
+  padding: 14px;
+  border-radius: 12px;
+}
+
+body.mobile-mode .calendar-day {
+  min-height: 64px;
+  padding: 4px;
+}
+
+body.mobile-mode .calendar-day-reservations {
+  /* Hide text lists on mobile for spacing */
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 4px;
+  max-height: 40px;
+  overflow: hidden;
+}
+
+body.mobile-mode .calendar-res-pill {
+  /* Transform to bullet dots on mobile */
+  width: 6px;
+  height: 6px;
+  min-width: 6px;
+  border-radius: 50%;
+  padding: 0;
+  text-indent: -9999px;
+  border: 0;
+}
+
+body.mobile-mode .res-pill-blue {
+  background: var(--blue);
+}
+
+body.mobile-mode .res-pill-orange {
+  background: var(--orange);
+}
+
+body.mobile-mode .res-pill-emerald {
+  background: var(--forest);
+}
+
+body.mobile-mode .profile-info {
+  display: none; /* Hide nickname text on mobile to fit the topbar */
+}
+
+body.mobile-mode .svg-viewport-wrapper {
+  padding: 6px 0;
+}
+
+/* Modal and popover layout adjustments for small screens */
+body.mobile-mode .reservation-popover {
+  width: 250px;
+  padding: 12px;
+}
+
+body.mobile-mode .time-slot-chip {
+  padding: 4px 0;
+}
+
+body.mobile-mode .popover-slots-grid {
+  grid-template-columns: repeat(3, 1fr); /* 3 cols on mobile instead of 4 */
+}

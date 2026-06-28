@@ -1,0 +1,288 @@
+{
+  "canvas": {
+    "width": 1000,
+    "height": 595
+  },
+  "shapes": [
+    {
+      "id": "직사각형_3",
+      "text": "",
+      "x": 2.6,
+      "y": 0.0,
+      "width": 997.4,
+      "height": 232.8,
+      "role": "building_bounds",
+      "is_reservable": false
+    },
+    {
+      "id": "직사각형_4",
+      "text": "",
+      "x": 2.6,
+      "y": 256.3,
+      "width": 997.4,
+      "height": 339.1,
+      "role": "building_bounds",
+      "is_reservable": false
+    },
+    {
+      "id": "직사각형_5",
+      "text": "",
+      "x": 2.6,
+      "y": 0.0,
+      "width": 155.2,
+      "height": 36.6,
+      "role": "room",
+      "is_reservable": true
+    },
+    {
+      "id": "TextBox_7",
+      "text": "별관  :  지하 1 층",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 155.2,
+      "height": 36.6,
+      "role": "header",
+      "is_reservable": false
+    },
+    {
+      "id": "직사각형_8",
+      "text": "",
+      "x": 2.6,
+      "y": 256.3,
+      "width": 155.2,
+      "height": 36.6,
+      "role": "room",
+      "is_reservable": true
+    },
+    {
+      "id": "TextBox_9",
+      "text": "본관  :  지하 2 층",
+      "x": 0.0,
+      "y": 256.3,
+      "width": 155.2,
+      "height": 36.6,
+      "role": "header",
+      "is_reservable": false
+    },
+    {
+      "id": "직사각형_10",
+      "text": "교육관 1 ( 구 대학부실 / 초등부 / 중고등부 )",
+      "x": 206.6,
+      "y": 36.6,
+      "width": 353.8,
+      "height": 172.2,
+      "role": "room",
+      "is_reservable": true
+    },
+    {
+      "id": "직사각형_11",
+      "text": "소그룹 C ( 테이블  O)",
+      "x": 595.5,
+      "y": 36.6,
+      "width": 219.7,
+      "height": 72.4,
+      "role": "room",
+      "is_reservable": true
+    },
+    {
+      "id": "직사각형_12",
+      "text": "소그룹 D",
+      "x": 595.5,
+      "y": 135.6,
+      "width": 219.7,
+      "height": 72.4,
+      "role": "room",
+      "is_reservable": true
+    },
+    {
+      "id": "직사각형_14",
+      "text": "화장실",
+      "x": 891.9,
+      "y": 36.6,
+      "width": 65.0,
+      "height": 99.0,
+      "role": "room",
+      "is_reservable": false
+    },
+    {
+      "id": "직사각형_15",
+      "text": "새가족실 B",
+      "x": 48.8,
+      "y": 320.4,
+      "width": 180.0,
+      "height": 36.6,
+      "role": "room",
+      "is_reservable": true
+    },
+    {
+      "id": "직사각형_16",
+      "text": "본관",
+      "x": 236.3,
+      "y": 278.6,
+      "width": 247.7,
+      "height": 214.0,
+      "role": "room",
+      "is_reservable": true
+    },
+    {
+      "id": "직사각형_17",
+      "text": "새가족실 A",
+      "x": 48.8,
+      "y": 516.1,
+      "width": 226.7,
+      "height": 62.3,
+      "role": "room",
+      "is_reservable": true
+    },
+    {
+      "id": "직사각형_18",
+      "text": "영유아 1",
+      "x": 19.2,
+      "y": 360.5,
+      "width": 89.8,
+      "height": 36.6,
+      "role": "room",
+      "is_reservable": true
+    },
+    {
+      "id": "직사각형_20",
+      "text": "영유아 2",
+      "x": 109.4,
+      "y": 360.5,
+      "width": 89.8,
+      "height": 36.6,
+      "role": "room",
+      "is_reservable": true
+    },
+    {
+      "id": "직사각형_21",
+      "text": "영유아 3",
+      "x": 19.2,
+      "y": 406.3,
+      "width": 89.8,
+      "height": 36.6,
+      "role": "room",
+      "is_reservable": true
+    },
+    {
+      "id": "직사각형_22",
+      "text": "영유아 4",
+      "x": 109.4,
+      "y": 406.3,
+      "width": 89.8,
+      "height": 36.6,
+      "role": "room",
+      "is_reservable": true
+    },
+    {
+      "id": "직사각형_23",
+      "text": "영유아 5",
+      "x": 48.8,
+      "y": 456.0,
+      "width": 180.0,
+      "height": 36.6,
+      "role": "room",
+      "is_reservable": true
+    },
+    {
+      "id": "직사각형_36",
+      "text": "화장실",
+      "x": 491.3,
+      "y": 435.3,
+      "width": 65.0,
+      "height": 57.3,
+      "role": "room",
+      "is_reservable": false
+    },
+    {
+      "id": "직사각형_37",
+      "text": "교육관 3 ( 성가대 연습 )",
+      "x": 575.4,
+      "y": 278.6,
+      "width": 219.7,
+      "height": 72.4,
+      "role": "room",
+      "is_reservable": true
+    },
+    {
+      "id": "직사각형_38",
+      "text": "상담실",
+      "x": 878.4,
+      "y": 278.6,
+      "width": 84.8,
+      "height": 72.4,
+      "role": "room",
+      "is_reservable": true
+    },
+    {
+      "id": "직사각형_39",
+      "text": "PC 복사기",
+      "x": 804.3,
+      "y": 292.6,
+      "width": 65.0,
+      "height": 57.3,
+      "role": "room",
+      "is_reservable": false
+    },
+    {
+      "id": "직사각형_40",
+      "text": "소그룹 B",
+      "x": 563.7,
+      "y": 435.3,
+      "width": 91.3,
+      "height": 57.3,
+      "role": "room",
+      "is_reservable": true
+    },
+    {
+      "id": "직사각형_41",
+      "text": "소그룹 A",
+      "x": 563.7,
+      "y": 506.0,
+      "width": 91.3,
+      "height": 57.3,
+      "role": "room",
+      "is_reservable": true
+    },
+    {
+      "id": "직사각형_42",
+      "text": "교육관 2A",
+      "x": 710.8,
+      "y": 506.0,
+      "width": 78.3,
+      "height": 57.3,
+      "role": "room",
+      "is_reservable": true
+    },
+    {
+      "id": "직사각형_43",
+      "text": "교육관 2 ( 유년부 / 유치부 )",
+      "x": 796.2,
+      "y": 379.8,
+      "width": 168.1,
+      "height": 183.5,
+      "role": "room",
+      "is_reservable": true
+    },
+    {
+      "id": "직사각형_44",
+      "text": "교육관 2B",
+      "x": 796.2,
+      "y": 506.0,
+      "width": 89.7,
+      "height": 57.3,
+      "role": "room",
+      "is_reservable": true
+    },
+    {
+      "id": "직사각형_45",
+      "text": "교육관 2C",
+      "x": 885.9,
+      "y": 506.0,
+      "width": 78.3,
+      "height": 57.3,
+      "role": "room",
+      "is_reservable": true
+    }
+  ]
+}

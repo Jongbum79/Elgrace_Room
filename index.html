@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>주은혜교회 공간예약시스템</title>
+  
+  <!-- Fonts & Pretendard -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="./styles.css?v=1.0">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    window.tailwind = {
+      config: {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["Pretendard", "system-ui", "sans-serif"],
+            },
+          },
+        },
+      },
+    };
+  </script>
+  
+  <!-- Supabase JS Client SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- Kakao Login SDK -->
+  <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" 
+          integrity="sha384-ih7gZgc0j1t5tvyVy96e1R3FegC4v54a32K6TfA+T5n4H5H6O3f6u9b9" 
+          crossorigin="anonymous"></script>
+          
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="desktop-mode">
+  <div class="app-shell">
+    
+    <!-- Topbar / Header -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <!-- Logo placeholder matching Elgrace_Summer -->
+        <div class="logo-container bg-white px-3 py-1.5 rounded-lg shadow-sm border border-gray-100 flex items-center justify-center">
+          <span class="font-extrabold text-emerald-800 text-sm tracking-wide">주은혜교회</span>
+        </div>
+        <div class="header-titles">
+          <p class="eyebrow">SPACE RESERVATION SYSTEM</p>
+          <h1>공간예약시스템</h1>
+        </div>
+      </div>
+      
+      <div class="topbar-actions">
+        <!-- View Mode Switcher (PC / Mobile) -->
+        <div class="view-mode-switch" aria-label="보기 모드 선택">
+          <button class="view-mode-button active" type="button" data-mode="desktop">PC</button>
+          <button class="view-mode-button" type="button" data-mode="mobile">모바일</button>
+        </div>
+        
+        <!-- Auth Profile Widget -->
+        <div id="auth-widget" class="auth-widget">
+          <!-- Logged Out State -->
+          <button id="btn-login" class="btn-kakao-login">
+            <span class="kakao-icon">💬</span>
+            <span>카카오 로그인</span>
+          </button>
+          
+          <!-- Logged In State (Hidden by default) -->
+          <div id="user-profile" class="user-profile hidden">
+            <img id="user-avatar" src="" alt="프로필" class="user-avatar">
+            <div class="profile-info">
+              <span id="user-name" class="user-name">닉네임</span>
+              <span class="user-role">사용자</span>
+            </div>
+            <button id="btn-logout" class="btn-logout" title="로그아웃">
+              <i data-lucide="log-out"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+    
+    <!-- Main Scroll Container -->
+    <main class="main-content">
+      
+      <!-- 1. 달력 카드 (1달 단위) -->
+      <section class="card calendar-card">
+        <div class="card-header flex justify-between items-center">
+          <div class="flex items-center gap-3">
+            <i data-lucide="calendar" class="text-emerald-700 w-5 h-5"></i>
+            <h2>예약 현황 달력</h2>
+          </div>
+          
+          <!-- Month Control -->
+          <div class="month-controller flex items-center gap-4">
+            <button id="prev-month" class="ctrl-btn" title="이전 달"><i data-lucide="chevron-left"></i></button>
+            <span id="current-month-year" class="month-title">2026년 6월</span>
+            <button id="next-month" class="ctrl-btn" title="다음 달"><i data-lucide="chevron-right"></i></button>
+            
+            <button id="refresh-btn" class="refresh-btn" title="새로고침">
+              <i data-lucide="rotate-cw"></i>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Calendar Grid -->
+        <div class="calendar-grid-container">
+          <div class="calendar-weekday-header">
+            <span class="sunday">일</span>
+            <span>월</span>
+            <span>화</span>
+            <span>수</span>
+            <span>목</span>
+            <span>금</span>
+            <span class="saturday">토</span>
+          </div>
+          <div id="calendar-days-grid" class="calendar-days-grid">
+            <!-- Rendered dynamically by app.js -->
+          </div>
+        </div>
+      </section>
+      
+      <!-- 2. 도면 구역 카드 -->
+      <section class="card layout-card">
+        <div class="card-header">
+          <div class="flex items-center gap-3">
+            <i data-lucide="map" class="text-emerald-700 w-5 h-5"></i>
+            <div>
+              <h2>공간 배치 도면</h2>
+              <p class="subtitle">방을 클릭하면 예약을 진행할 수 있습니다. (Utility 및 화장실 예약 불가)</p>
+            </div>
+          </div>
+          <!-- Legend indicators -->
+          <div class="legend flex gap-4 text-xs font-semibold text-gray-500">
+            <span class="flex items-center gap-1.5"><span class="legend-box bg-white border border-gray-200"></span>예약 가능</span>
+            <span class="flex items-center gap-1.5"><span class="legend-box bg-orange-100 border border-orange-300"></span>일부 예약됨</span>
+            <span class="flex items-center gap-1.5"><span class="legend-box bg-red-50 border border-red-200"></span>예약 불가 (만석)</span>
+            <span class="flex items-center gap-1.5"><span class="legend-box bg-gray-100 border border-gray-200"></span>공용/유틸리티</span>
+          </div>
+        </div>
+        
+        <!-- SVG Layout Container -->
+        <div class="svg-viewport-wrapper">
+          <div class="svg-container">
+            <svg id="room-layout-svg" viewBox="0 0 1000 595" width="100%" height="100%">
+              <!-- Rendered dynamically from room_layout_data.json -->
+            </svg>
+            
+            <!-- Dynamic Floating Popover Tooltip (Reservations Form) -->
+            <div id="reservation-popover" class="reservation-popover hidden">
+              <div class="popover-arrow"></div>
+              <div class="popover-content">
+                <div class="popover-header">
+                  <h3 id="popover-room-name">공간 이름</h3>
+                  <span id="popover-date" class="text-xs text-gray-500 font-medium">2026-06-28</span>
+                  <button id="popover-close-btn" class="popover-close">&times;</button>
+                </div>
+                
+                <!-- Time slot grid (09:00 ~ 21:00 in 30min intervals) -->
+                <p class="label">시간대 선택 (09:00 ~ 21:00, 드래그 또는 클릭)</p>
+                <div id="popover-slots-grid" class="popover-slots-grid">
+                  <!-- 24 slots (09:00 ~ 20:30) rendered by app.js -->
+                </div>
+                
+                <!-- Purpose form -->
+                <div class="form-group mt-3">
+                  <label for="popover-title-input">사용 목적</label>
+                  <input type="text" id="popover-title-input" placeholder="어떤 용도인지 적어주세요. (예: 중고등부 연습)">
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="popover-actions mt-4 flex gap-2">
+                  <button id="popover-cancel-btn" class="btn-secondary flex-1 py-1.5 text-xs rounded-md">취소</button>
+                  <button id="popover-confirm-btn" class="btn-primary flex-1 py-1.5 text-xs rounded-md">예약 확인</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- 3. 하단 타임라인 현황 카드 -->
+      <section class="card timeline-card">
+        <div class="card-header">
+          <div class="flex items-center gap-3">
+            <i data-lucide="clock" class="text-emerald-700 w-5 h-5"></i>
+            <div>
+              <h2>시간대별 전체 예약 상세 현황</h2>
+              <p class="subtitle">선택한 날짜의 전체 공간 현황입니다. 드래그하여 즉시 예약할 수 있습니다.</p>
+            </div>
+          </div>
+          <div id="selected-date-badge" class="selected-date-badge">
+            2026년 06월 28일
+          </div>
+        </div>
+        
+        <!-- Timeline Scroll Wrapper -->
+        <div class="timeline-scroll-wrapper">
+          <div class="timeline-table-container">
+            <!-- Dynamic Grid Matrix rendered by app.js -->
+            <table id="timeline-matrix-table" class="timeline-matrix-table">
+              <!-- Rendered dynamically by app.js -->
+            </table>
+          </div>
+        </div>
+      </section>
+      
+    </main>
+  </div>
+  
+  <!-- Simulated Kakao Login Modal (Fallback Modal) -->
+  <div id="mock-login-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
+        <h3 class="font-bold text-gray-800 flex items-center gap-2">
+          <span class="text-xl">💬</span> 카카오 계정 로그인 (모의)
+        </h3>
+        <button id="mock-login-close" class="text-gray-400 hover:text-gray-600">&times;</button>
+      </div>
+      <div class="modal-body space-y-4">
+        <p class="text-sm text-gray-500 leading-relaxed">
+          카카오 간편 로그인 키 등록 전, 로컬 서버와 GitHub Pages에서 예약 기능 테스트를 수행하기 위한 <strong>간편 모의 로그인</strong>을 지원합니다.
+        </p>
+        <div class="form-group">
+          <label for="mock-nickname" class="block text-xs font-semibold text-gray-600 mb-1">예약에 사용할 닉네임</label>
+          <input type="text" id="mock-nickname" placeholder="이름 또는 닉네임을 입력하세요 (예: 홍길동)" 
+                 class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-600">
+        </div>
+      </div>
+      <div class="modal-actions flex gap-2 mt-6">
+        <button id="mock-login-cancel" class="btn-secondary flex-1 py-2 text-sm rounded-lg">취소</button>
+        <button id="mock-login-submit" class="btn-kakao-confirm flex-1 py-2 text-sm rounded-lg font-bold">로그인 완료</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reservation Detail Dialog (View / Cancel reservation) -->
+  <div id="reservation-detail-modal" class="modal-overlay hidden">
+    <div class="modal-card max-w-sm">
+      <div class="modal-header flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
+        <h3 class="font-bold text-gray-800">예약 정보 확인</h3>
+        <button id="detail-modal-close" class="text-gray-400 hover:text-gray-600 text-lg">&times;</button>
+      </div>
+      <div class="modal-body space-y-3 text-sm">
+        <div>
+          <span class="text-gray-400 block text-xs">예약 공간</span>
+          <strong id="detail-room-name" class="text-gray-800">-</strong>
+        </div>
+        <div>
+          <span class="text-gray-400 block text-xs">예약 일시</span>
+          <strong id="detail-date-time" class="text-gray-800">-</strong>
+        </div>
+        <div>
+          <span class="text-gray-400 block text-xs">예약 목적</span>
+          <strong id="detail-title" class="text-gray-800">-</strong>
+        </div>
+        <div>
+          <span class="text-gray-400 block text-xs">예약자</span>
+          <strong id="detail-user" class="text-gray-800">-</strong>
+        </div>
+      </div>
+      <div class="modal-actions mt-6 flex gap-2">
+        <button id="detail-close-btn" class="btn-secondary flex-1 py-2 text-sm rounded-lg">닫기</button>
+        <button id="detail-delete-btn" class="btn-danger flex-1 py-2 text-sm rounded-lg text-white font-bold hidden">예약 취소</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Global Toast Notification -->
+  <div id="toast" class="toast">알림 메시지</div>
+
+  <!-- Main JavaScript App -->
+  <script src="./app.js?v=1.0"></script>
+</body>
+</html>
