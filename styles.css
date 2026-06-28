@@ -1167,6 +1167,14 @@ body.mobile-mode .card {
   border-radius: 12px;
 }
 
+body.mobile-mode .calendar-card {
+  min-height: 0;
+}
+
+body.mobile-mode .calendar-card .card-header {
+  margin-bottom: 12px;
+}
+
 body.mobile-mode .calendar-days-grid {
   grid-auto-rows: minmax(45px, auto);
 }
