@@ -388,6 +388,11 @@ function renderCalendar() {
       }
     }
     
+    const datePolicy = checkDateReservationAllowed(dateStr);
+    if (datePolicy.allowed) {
+      dayDiv.classList.add("reservable-day");
+    }
+    
     // 일 수 라벨 추가
     const numSpan = document.createElement("span");
     numSpan.classList.add("calendar-day-number");
