@@ -870,7 +870,7 @@ const TIMELINE_LONG_PRESS_MS = 350;
 const TIMELINE_TOUCH_CANCEL_DISTANCE = 24;
 let timelineLongPressTimer = null;
 let pendingTimelineTouch = null;
-let isTimelineTouchSelectMode = false;
+let timelineTouchCancelTimer = null;
 
 function renderTimelineMatrix() {
   const table = document.getElementById("timeline-matrix-table");
@@ -981,30 +981,20 @@ function renderTimelineMatrix() {
           }
         });
         
-        tdCell.addEventListener("click", (e) => {
-          if (!isTimelineTouchSelectMode || dragRoomId !== room.id) return;
-          e.preventDefault();
-          e.stopPropagation();
-          updateTimelineTouchSelection(room.id, idx);
-        });
-        
         tdCell.addEventListener("touchstart", (e) => {
           scheduleTimelineLongPressSelection(e, room.id, idx, tdCell);
         }, { passive: true });
         
         tdCell.addEventListener("touchmove", (e) => {
-          cancelTimelineLongPressIfMoved(e);
+          updateTimelineDragSelectionFromTouch(e);
         }, { passive: false });
         
-        tdCell.addEventListener("touchend", (e) => {
-          if (isTimelineTouchSelectMode) {
-            return;
-          }
-          clearTimelineLongPress();
+        tdCell.addEventListener("touchend", () => {
+          finishTimelineTouchSelection();
         });
         
         tdCell.addEventListener("touchcancel", () => {
-          clearTimelineLongPress();
+          handleTimelineTouchCancel();
         });
         
         tdCell.addEventListener("contextmenu", (e) => {
@@ -1038,7 +1028,7 @@ function scheduleTimelineLongPressSelection(e, roomId, slotIdx, sourceCell) {
   
   timelineLongPressTimer = setTimeout(() => {
     if (!pendingTimelineTouch) return;
-    const started = beginTimelineTouchSelectionMode(roomId, slotIdx, sourceCell);
+    const started = beginTimelineDragSelection(roomId, slotIdx, sourceCell);
     if (started && window.navigator && window.navigator.vibrate) {
       window.navigator.vibrate(12);
     }
@@ -1050,6 +1040,11 @@ function clearTimelineLongPress() {
   clearTimeout(timelineLongPressTimer);
   timelineLongPressTimer = null;
   pendingTimelineTouch = null;
+}
+
+function clearTimelineTouchCancelTimer() {
+  clearTimeout(timelineTouchCancelTimer);
+  timelineTouchCancelTimer = null;
 }
 
 function getTimelineEventPoint(e) {
@@ -1074,22 +1069,11 @@ function getTimelineEventPoint(e) {
 
 function clearTimelineSelectionVisuals() {
   document.body.classList.remove("timeline-touch-selecting");
-  removeTimelineTouchSelectActions();
   const existingBar = document.getElementById("matrix-dynamic-selecting-bar");
   if (existingBar) existingBar.remove();
   document.querySelectorAll(".matrix-cell.timeline-touch-active").forEach(cell => {
     cell.classList.remove("timeline-touch-active");
   });
-}
-
-function beginTimelineTouchSelectionMode(roomId, slotIdx, sourceCell = null) {
-  const started = beginTimelineDragSelection(roomId, slotIdx, sourceCell);
-  if (!started) return false;
-  
-  isTimelineTouchSelectMode = true;
-  showTimelineTouchSelectActions();
-  showToast("선택 모드: 시간칸을 눌러 범위를 조정한 뒤 완료를 누르세요.");
-  return true;
 }
 
 function beginTimelineDragSelection(roomId, slotIdx, sourceCell = null) {
@@ -1105,26 +1089,40 @@ function beginTimelineDragSelection(roomId, slotIdx, sourceCell = null) {
   dragRoomId = roomId;
   dragStartSlotIdx = slotIdx;
   dragEndSlotIdx = slotIdx;
+  clearTimelineTouchCancelTimer();
   document.body.classList.add("timeline-touch-selecting");
   highlightTimelineDragSelection(roomId, sourceCell);
   return true;
 }
 
-function cancelTimelineLongPressIfMoved(e) {
+function updateTimelineDragSelectionFromTouch(e) {
   const point = getTimelineEventPoint(e);
   if (!point) return;
   
-  if (!pendingTimelineTouch) return;
-  const deltaX = point.clientX - pendingTimelineTouch.startX;
-  const deltaY = point.clientY - pendingTimelineTouch.startY;
-  const movedDistance = Math.hypot(deltaX, deltaY);
-  if (movedDistance > TIMELINE_TOUCH_CANCEL_DISTANCE) {
-    clearTimelineLongPress();
+  if (!isTimelineDragging || !dragRoomId) {
+    if (!pendingTimelineTouch) return;
+    const deltaX = point.clientX - pendingTimelineTouch.startX;
+    const deltaY = point.clientY - pendingTimelineTouch.startY;
+    const movedDistance = Math.hypot(deltaX, deltaY);
+    if (movedDistance > TIMELINE_TOUCH_CANCEL_DISTANCE) {
+      clearTimelineLongPress();
+    }
+    return;
   }
+  
+  e.preventDefault();
+  clearTimelineTouchCancelTimer();
+  
+  const targetCell = getTimelineCellFromTouchPoint(point.clientX, point.clientY);
+  if (!targetCell) return;
+  
+  dragEndSlotIdx = Number(targetCell.dataset.slotIdx);
+  highlightTimelineDragSelection(dragRoomId);
 }
 
-function finishTimelinePointerSelection(options = {}) {
+function finishTimelineTouchSelection(options = {}) {
   clearTimelineLongPress();
+  clearTimelineTouchCancelTimer();
   
   if (!isTimelineDragging) return;
   
@@ -1140,55 +1138,19 @@ function finishTimelinePointerSelection(options = {}) {
   handleTimelineDragEnd();
 }
 
-function updateTimelineTouchSelection(roomId, slotIdx) {
-  if (!isTimelineTouchSelectMode || dragRoomId !== roomId) return;
-  dragEndSlotIdx = slotIdx;
-  highlightTimelineDragSelection(roomId);
-}
-
-function completeTimelineTouchSelection() {
-  if (!isTimelineTouchSelectMode) return;
-  isTimelineTouchSelectMode = false;
-  isTimelineDragging = false;
-  handleTimelineDragEnd();
-}
-
-function cancelTimelineTouchSelection() {
-  isTimelineTouchSelectMode = false;
-  isTimelineDragging = false;
-  dragRoomId = "";
-  dragStartSlotIdx = -1;
-  dragEndSlotIdx = -1;
-  clearTimelineSelectionVisuals();
-}
-
-function showTimelineTouchSelectActions() {
-  removeTimelineTouchSelectActions();
+function handleTimelineTouchCancel() {
+  clearTimelineLongPress();
+  if (!isTimelineDragging) return;
   
-  const actions = document.createElement("div");
-  actions.id = "timeline-touch-select-actions";
-  actions.className = "timeline-touch-select-actions";
-  
-  const cancelBtn = document.createElement("button");
-  cancelBtn.type = "button";
-  cancelBtn.className = "timeline-touch-action secondary";
-  cancelBtn.textContent = "취소";
-  cancelBtn.addEventListener("click", cancelTimelineTouchSelection);
-  
-  const doneBtn = document.createElement("button");
-  doneBtn.type = "button";
-  doneBtn.className = "timeline-touch-action primary";
-  doneBtn.textContent = "완료";
-  doneBtn.addEventListener("click", completeTimelineTouchSelection);
-  
-  actions.appendChild(cancelBtn);
-  actions.appendChild(doneBtn);
-  document.body.appendChild(actions);
-}
-
-function removeTimelineTouchSelectActions() {
-  const actions = document.getElementById("timeline-touch-select-actions");
-  if (actions) actions.remove();
+  clearTimelineTouchCancelTimer();
+  timelineTouchCancelTimer = setTimeout(() => {
+    if (!isTimelineDragging) return;
+    isTimelineDragging = false;
+    dragRoomId = "";
+    dragStartSlotIdx = -1;
+    dragEndSlotIdx = -1;
+    clearTimelineSelectionVisuals();
+  }, 1200);
 }
 
 function getTimelineCellFromTouchPoint(clientX, clientY) {
@@ -1740,11 +1702,10 @@ function setupEventListeners() {
     isDraggingSlots = false;
     lastTouchedSlotTime = "";
     touchDragAnchorSlotIdx = -1;
-    if (isTimelineTouchSelectMode) return;
-    clearTimelineLongPress();
     if (isTimelineDragging) {
-      isTimelineDragging = false;
-      handleTimelineDragEnd();
+      finishTimelineTouchSelection();
+    } else {
+      clearTimelineLongPress();
     }
   });
   
@@ -1752,10 +1713,10 @@ function setupEventListeners() {
     isDraggingSlots = false;
     lastTouchedSlotTime = "";
     touchDragAnchorSlotIdx = -1;
-    clearTimelineLongPress();
-    if (isTimelineTouchSelectMode) return;
     if (isTimelineDragging) {
-      finishTimelinePointerSelection({ cancelled: true });
+      handleTimelineTouchCancel();
+    } else {
+      clearTimelineLongPress();
     }
   });
   
