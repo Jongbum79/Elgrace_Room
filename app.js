@@ -846,6 +846,7 @@ const TIMELINE_LONG_PRESS_MS = 350;
 const TIMELINE_TOUCH_CANCEL_DISTANCE = 24;
 let timelineLongPressTimer = null;
 let pendingTimelineTouch = null;
+let activeTimelinePointerId = null;
 
 function renderTimelineMatrix() {
   const table = document.getElementById("timeline-matrix-table");
@@ -963,13 +964,25 @@ function renderTimelineMatrix() {
           }
         });
         
-        tdCell.addEventListener("touchstart", (e) => {
+        tdCell.addEventListener("pointerdown", (e) => {
+          if (e.pointerType === "mouse") return;
           scheduleTimelineLongPressSelection(e, room.id, idx, tdCell);
-        }, { passive: false });
+        });
         
-        tdCell.addEventListener("touchmove", (e) => {
-          updateTimelineDragSelectionFromTouch(e);
-        }, { passive: false });
+        tdCell.addEventListener("pointermove", (e) => {
+          if (e.pointerType === "mouse") return;
+          updateTimelineDragSelectionFromPointer(e);
+        });
+        
+        tdCell.addEventListener("pointerup", (e) => {
+          if (e.pointerType === "mouse") return;
+          finishTimelinePointerSelection();
+        });
+        
+        tdCell.addEventListener("pointercancel", (e) => {
+          if (e.pointerType === "mouse") return;
+          finishTimelinePointerSelection({ cancelled: true });
+        });
         
         tdCell.addEventListener("contextmenu", (e) => {
           if (isTimelineDragging || pendingTimelineTouch) {
@@ -988,19 +1001,28 @@ function renderTimelineMatrix() {
 }
 
 function scheduleTimelineLongPressSelection(e, roomId, slotIdx, sourceCell) {
-  const touch = e.touches[0];
-  if (!touch) return;
+  const point = getTimelineEventPoint(e);
+  if (!point) return;
   
   clearTimelineLongPress();
+  activeTimelinePointerId = point.pointerId || null;
   pendingTimelineTouch = {
     roomId,
     slotIdx,
-    startX: touch.clientX,
-    startY: touch.clientY
+    sourceCell,
+    startX: point.clientX,
+    startY: point.clientY
   };
   
   timelineLongPressTimer = setTimeout(() => {
     if (!pendingTimelineTouch) return;
+    if (sourceCell && activeTimelinePointerId !== null && sourceCell.setPointerCapture) {
+      try {
+        sourceCell.setPointerCapture(activeTimelinePointerId);
+      } catch (error) {
+        console.warn("Pointer capture failed:", error);
+      }
+    }
     const started = beginTimelineDragSelection(roomId, slotIdx, sourceCell);
     if (started && window.navigator && window.navigator.vibrate) {
       window.navigator.vibrate(12);
@@ -1013,6 +1035,26 @@ function clearTimelineLongPress() {
   clearTimeout(timelineLongPressTimer);
   timelineLongPressTimer = null;
   pendingTimelineTouch = null;
+}
+
+function getTimelineEventPoint(e) {
+  if (e.touches && e.touches[0]) {
+    return {
+      clientX: e.touches[0].clientX,
+      clientY: e.touches[0].clientY,
+      pointerId: null
+    };
+  }
+  
+  if (typeof e.clientX === "number" && typeof e.clientY === "number") {
+    return {
+      clientX: e.clientX,
+      clientY: e.clientY,
+      pointerId: typeof e.pointerId === "number" ? e.pointerId : null
+    };
+  }
+  
+  return null;
 }
 
 function clearTimelineSelectionVisuals() {
@@ -1042,14 +1084,14 @@ function beginTimelineDragSelection(roomId, slotIdx, sourceCell = null) {
   return true;
 }
 
-function updateTimelineDragSelectionFromTouch(e) {
-  const touch = e.touches[0];
-  if (!touch) return;
+function updateTimelineDragSelectionFromPointer(e) {
+  const point = getTimelineEventPoint(e);
+  if (!point) return;
   
   if (!isTimelineDragging || !dragRoomId) {
     if (pendingTimelineTouch) {
-      const deltaX = touch.clientX - pendingTimelineTouch.startX;
-      const deltaY = touch.clientY - pendingTimelineTouch.startY;
+      const deltaX = point.clientX - pendingTimelineTouch.startX;
+      const deltaY = point.clientY - pendingTimelineTouch.startY;
       const movedDistance = Math.hypot(deltaX, deltaY);
       if (movedDistance > TIMELINE_TOUCH_CANCEL_DISTANCE) {
         clearTimelineLongPress();
@@ -1060,11 +1102,29 @@ function updateTimelineDragSelectionFromTouch(e) {
   
   e.preventDefault();
   
-  const targetCell = getTimelineCellFromTouchPoint(touch.clientX, touch.clientY);
+  const targetCell = getTimelineCellFromTouchPoint(point.clientX, point.clientY);
   if (!targetCell) return;
   
   dragEndSlotIdx = Number(targetCell.dataset.slotIdx);
   highlightTimelineDragSelection(dragRoomId);
+}
+
+function finishTimelinePointerSelection(options = {}) {
+  clearTimelineLongPress();
+  activeTimelinePointerId = null;
+  
+  if (!isTimelineDragging) return;
+  
+  isTimelineDragging = false;
+  if (options.cancelled) {
+    dragRoomId = "";
+    dragStartSlotIdx = -1;
+    dragEndSlotIdx = -1;
+    clearTimelineSelectionVisuals();
+    return;
+  }
+  
+  handleTimelineDragEnd();
 }
 
 function getTimelineCellFromTouchPoint(clientX, clientY) {
@@ -1629,12 +1689,7 @@ function setupEventListeners() {
     touchDragAnchorSlotIdx = -1;
     clearTimelineLongPress();
     if (isTimelineDragging) {
-      isTimelineDragging = false;
-      dragRoomId = "";
-      dragStartSlotIdx = -1;
-      dragEndSlotIdx = -1;
-      clearTimelineSelectionVisuals();
-      renderTimelineMatrix();
+      return;
     }
   });
   
