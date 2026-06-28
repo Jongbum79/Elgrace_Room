@@ -1345,6 +1345,40 @@ body.mobile-mode .matrix-selecting-bar {
   opacity: 1;
 }
 
+.timeline-touch-select-actions {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  border-radius: 10px;
+  background: rgba(26, 26, 26, 0.92);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.22);
+  z-index: 2500;
+}
+
+.timeline-touch-action {
+  border: 0;
+  border-radius: 7px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.timeline-touch-action.secondary {
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+}
+
+.timeline-touch-action.primary {
+  background: var(--forest);
+  color: white;
+}
+
 body.mobile-mode #selected-date-badge {
   font-size: 15px !important;
   line-height: 1.2 !important;
