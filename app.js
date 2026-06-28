@@ -535,8 +535,12 @@ function openReservationPopover(room, event) {
         e.preventDefault();
       });
       
-      chip.addEventListener("mouseenter", () => {
+      chip.addEventListener("mouseenter", (e) => {
         if (isDraggingSlots) {
+          if (e.buttons !== 1) { // 마우스 클릭이 풀린 상태면 드래그 종료
+            isDraggingSlots = false;
+            return;
+          }
           toggleSlotSelection(time, chip);
         }
       });
@@ -544,13 +548,6 @@ function openReservationPopover(room, event) {
     
     popoverSlotsGrid.appendChild(chip);
   });
-  
-  // 마우스 업 시 드래그 종료
-  const globalMouseUp = () => {
-    isDraggingSlots = false;
-    document.removeEventListener("mouseup", globalMouseUp);
-  };
-  document.addEventListener("mouseup", globalMouseUp);
   
   // 팝오버 위치 결정
   popover.classList.remove("hidden");
@@ -725,8 +722,16 @@ function renderTimelineMatrix() {
           e.preventDefault();
         });
         
-        tdCell.addEventListener("mouseenter", () => {
+        tdCell.addEventListener("mouseenter", (e) => {
           if (isTimelineDragging && dragRoomId === room.id) {
+            if (e.buttons !== 1) { // 마우스 클릭이 풀린 상태면 드래그 종료 및 초기화
+              isTimelineDragging = false;
+              dragRoomId = "";
+              dragStartSlotIdx = -1;
+              dragEndSlotIdx = -1;
+              renderTimelineMatrix();
+              return;
+            }
             dragEndSlotIdx = idx;
             // 범위 내 가시적 하이라이트 반영
             highlightTimelineDragSelection(room.id);
@@ -741,70 +746,65 @@ function renderTimelineMatrix() {
   });
   
   table.appendChild(tbody);
+}
+
+// 전역 마우스 업 감지하여 타임라인 드래그 완료 후 예약 폼 팝업 연동
+function handleTimelineDragEnd() {
+  if (dragRoomId === "") return;
   
-  // 전역 마우스 업 감지하여 타임라인 드래그 완료 후 예약 폼 팝업 연동
-  const matrixMouseUp = () => {
-    if (isTimelineDragging) {
-      isTimelineDragging = false;
+  // 예약 창을 띄울 방 찾기
+  const room = roomLayout.shapes.find(s => s.id === dragRoomId);
+  if (room && dragStartSlotIdx !== -1 && dragEndSlotIdx !== -1) {
+    // 드래그 순서 보정
+    const minIdx = Math.min(dragStartSlotIdx, dragEndSlotIdx);
+    const maxIdx = Math.max(dragStartSlotIdx, dragEndSlotIdx);
+    
+    // 이미 예약된 슬롯이 중간에 끼어있는지 확인
+    const dateReservations = reservations.filter(res => res.date === selectedDateStr && res.room_id === dragRoomId);
+    let hasConflict = false;
+    
+    const dragSlots = [];
+    for (let idx = minIdx; idx <= maxIdx; idx++) {
+      const time = TIME_SLOTS[idx];
+      const isBooked = dateReservations.some(res => {
+        const start = TIME_SLOTS.indexOf(res.start_time);
+        const end = TIME_SLOTS.indexOf(res.end_time);
+        return idx >= start && idx < end;
+      });
       
-      // 예약 창을 띄울 방 찾기
-      const room = roomLayout.shapes.find(s => s.id === dragRoomId);
-      if (room && dragStartSlotIdx !== -1 && dragEndSlotIdx !== -1) {
-        // 드래그 순서 보정
-        const minIdx = Math.min(dragStartSlotIdx, dragEndSlotIdx);
-        const maxIdx = Math.max(dragStartSlotIdx, dragEndSlotIdx);
-        
-        // 이미 예약된 슬롯이 중간에 끼어있는지 확인
-        const dateReservations = reservations.filter(res => res.date === selectedDateStr && res.room_id === dragRoomId);
-        let hasConflict = false;
-        
-        const dragSlots = [];
-        for (let idx = minIdx; idx <= maxIdx; idx++) {
-          const time = TIME_SLOTS[idx];
-          const isBooked = dateReservations.some(res => {
-            const start = TIME_SLOTS.indexOf(res.start_time);
-            const end = TIME_SLOTS.indexOf(res.end_time);
-            return idx >= start && idx < end;
-          });
-          
-          if (isBooked) {
-            hasConflict = true;
-            break;
-          }
-          dragSlots.push(time);
-        }
-        
-        if (hasConflict) {
-          showToast("이미 예약된 시간대가 포함되어 있습니다.");
-          renderTimelineMatrix(); // 하이라이트 초기화용 재렌더링
-        } else {
-          // 해당 방 기준으로 예약 popover 트리거 및 슬롯 설정
-          openReservationPopover(room, {
-            stopPropagation: () => {},
-            preventDefault: () => {}
-          });
-          
-          // 팝오버의 칩 선택 상태 동기화
-          selectedPopoverSlots = dragSlots;
-          document.querySelectorAll(".time-slot-chip").forEach(chip => {
-            const time = chip.dataset.time;
-            if (dragSlots.includes(time)) {
-              chip.classList.add("selected");
-            } else {
-              chip.classList.remove("selected");
-            }
-          });
-        }
+      if (isBooked) {
+        hasConflict = true;
+        break;
       }
-      
-      dragRoomId = "";
-      dragStartSlotIdx = -1;
-      dragEndSlotIdx = -1;
-      document.removeEventListener("mouseup", matrixMouseUp);
+      dragSlots.push(time);
     }
-  };
+    
+    if (hasConflict) {
+      showToast("이미 예약된 시간대가 포함되어 있습니다.");
+      renderTimelineMatrix(); // 하이라이트 초기화용 재렌더링
+    } else {
+      // 해당 방 기준으로 예약 popover 트리거 및 슬롯 설정
+      openReservationPopover(room, {
+        stopPropagation: () => {},
+        preventDefault: () => {}
+      });
+      
+      // 팝오버의 칩 선택 상태 동기화
+      selectedPopoverSlots = dragSlots;
+      document.querySelectorAll(".time-slot-chip").forEach(chip => {
+        const time = chip.dataset.time;
+        if (dragSlots.includes(time)) {
+          chip.classList.add("selected");
+        } else {
+          chip.classList.remove("selected");
+        }
+      });
+    }
+  }
   
-  document.addEventListener("mouseup", matrixMouseUp);
+  dragRoomId = "";
+  dragStartSlotIdx = -1;
+  dragEndSlotIdx = -1;
 }
 
 // 타임라인 내 드래그 범위 하이라이트 계산
@@ -1106,6 +1106,15 @@ function setupEventListeners() {
     document.getElementById("reservation-detail-modal").classList.add("hidden");
   });
   document.getElementById("detail-delete-btn").addEventListener("click", cancelReservation);
+  
+  // 전역 마우스 업 감지하여 드래그 상태 해제
+  document.addEventListener("mouseup", () => {
+    isDraggingSlots = false;
+    if (isTimelineDragging) {
+      isTimelineDragging = false;
+      handleTimelineDragEnd();
+    }
+  });
 }
 
 function navigateMonth(offset) {
