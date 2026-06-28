@@ -560,11 +560,55 @@ function toggleSlotSelection(time, chipElement) {
   
   const index = selectedModalSlots.indexOf(time);
   if (index === -1) {
-    selectedModalSlots.push(time);
-    chipElement.classList.add("selected");
+    if (selectedModalSlots.length === 0) {
+      selectedModalSlots.push(time);
+      chipElement.classList.add("selected");
+    } else {
+      // 기존 선택된 인덱스 범위 확인
+      const indices = selectedModalSlots.map(t => TIME_SLOTS.indexOf(t));
+      const minIdx = Math.min(...indices);
+      const maxIdx = Math.max(...indices);
+      const newIdx = TIME_SLOTS.indexOf(time);
+      
+      // 인접한 칸인지 확인 (연속성 유지)
+      if (newIdx === minIdx - 1 || newIdx === maxIdx + 1) {
+        selectedModalSlots.push(time);
+        chipElement.classList.add("selected");
+      } else {
+        // 인접하지 않은 경우 기존 선택 해제하고 새로운 단일 선택으로 교체
+        document.querySelectorAll("#modal-slots-grid .time-slot-chip").forEach(chip => {
+          chip.classList.remove("selected");
+        });
+        selectedModalSlots = [time];
+        chipElement.classList.add("selected");
+      }
+    }
   } else {
-    selectedModalSlots.splice(index, 1);
-    chipElement.classList.remove("selected");
+    // 이미 선택된 셀을 클릭해서 취소하려는 경우
+    const tempSlots = selectedModalSlots.filter(t => t !== time);
+    
+    // 제거 후에도 여전히 연속적인지 확인
+    let remainsContiguous = true;
+    if (tempSlots.length > 1) {
+      const sortedIndices = tempSlots.map(t => TIME_SLOTS.indexOf(t)).sort((a, b) => a - b);
+      for (let i = 0; i < sortedIndices.length - 1; i++) {
+        if (sortedIndices[i+1] - sortedIndices[i] !== 1) {
+          remainsContiguous = false;
+          break;
+        }
+      }
+    }
+    
+    if (remainsContiguous) {
+      selectedModalSlots = tempSlots;
+      chipElement.classList.remove("selected");
+    } else {
+      // 연속성이 깨지는 경우 모든 선택 해제
+      document.querySelectorAll("#modal-slots-grid .time-slot-chip").forEach(chip => {
+        chip.classList.remove("selected");
+      });
+      selectedModalSlots = [];
+    }
   }
   
   // 선택 슬롯들 정렬
