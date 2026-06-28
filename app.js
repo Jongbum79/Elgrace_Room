@@ -514,7 +514,8 @@ function openReservationModal(room) {
   TIME_SLOTS.forEach(time => {
     const chip = document.createElement("div");
     chip.classList.add("time-slot-chip");
-    chip.textContent = time;
+    chip.textContent = "";
+    chip.title = time;
     chip.dataset.time = time;
     
     // 이미 예약되었는지 여부 확인
@@ -782,19 +783,61 @@ function handleTimelineDragEnd() {
 
 // 타임라인 내 드래그 범위 하이라이트 계산
 function highlightTimelineDragSelection(roomId) {
+  // 기존 하이라이트 바 제거
+  const existingBar = document.getElementById("matrix-dynamic-selecting-bar");
+  if (existingBar) {
+    existingBar.remove();
+  }
+  
+  if (dragStartSlotIdx === -1 || dragEndSlotIdx === -1 || roomId === "") return;
+  
   const minIdx = Math.min(dragStartSlotIdx, dragEndSlotIdx);
   const maxIdx = Math.max(dragStartSlotIdx, dragEndSlotIdx);
   
-  document.querySelectorAll(".matrix-cell").forEach(cell => {
-    if (cell.dataset.roomId === roomId) {
-      const idx = parseInt(cell.dataset.slotIdx);
-      if (idx >= minIdx && idx <= maxIdx && !cell.classList.contains("booked")) {
-        cell.classList.add("drag-selecting");
-      } else {
-        cell.classList.remove("drag-selecting");
-      }
+  // 이미 예약된 슬롯이 중간에 끼어있는지 확인
+  const dateReservations = reservations.filter(res => res.date === selectedDateStr && res.room_id === roomId);
+  let hasConflict = false;
+  
+  for (let idx = minIdx; idx <= maxIdx; idx++) {
+    const isBooked = dateReservations.some(res => {
+      const start = TIME_SLOTS.indexOf(res.start_time);
+      const end = TIME_SLOTS.indexOf(res.end_time);
+      return idx >= start && idx < end;
+    });
+    if (isBooked) {
+      hasConflict = true;
+      break;
     }
-  });
+  }
+  
+  // 첫 번째 셀 위치에 바를 오버레이로 그려줌
+  const startCell = document.querySelector(`.matrix-cell[data-room-id="${roomId}"][data-slot-idx="${minIdx}"]`);
+  if (startCell) {
+    const bar = document.createElement("div");
+    bar.id = "matrix-dynamic-selecting-bar";
+    bar.classList.add("matrix-selecting-bar");
+    
+    // 예약 여부에 따라 스타일 분기
+    if (hasConflict) {
+      bar.classList.add("selecting-bar-red");
+      bar.textContent = "선택 불가 (예약 있음)";
+    } else {
+      const room = roomLayout.shapes.find(s => s.id === roomId);
+      const roomText = room ? room.text : "";
+      if (roomText.includes("교육관")) {
+        bar.classList.add("selecting-bar-blue");
+      } else if (roomText.includes("소그룹")) {
+        bar.classList.add("selecting-bar-orange");
+      } else {
+        bar.classList.add("selecting-bar-emerald");
+      }
+      bar.textContent = "선택 중...";
+    }
+    
+    const duration = maxIdx - minIdx + 1;
+    bar.style.width = `calc(${duration * 100}% - 4px)`;
+    startCell.appendChild(bar);
+  }
 }
 
 // 9. 예약 삽입 (Supabase INSERT)
@@ -1096,6 +1139,10 @@ function setupEventListeners() {
   // 전역 마우스 업 감지하여 드래그 상태 해제
   document.addEventListener("mouseup", () => {
     isDraggingSlots = false;
+    const existingBar = document.getElementById("matrix-dynamic-selecting-bar");
+    if (existingBar) {
+      existingBar.remove();
+    }
     if (isTimelineDragging) {
       isTimelineDragging = false;
       handleTimelineDragEnd();
