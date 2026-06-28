@@ -842,6 +842,10 @@ let dragStartSlotIdx = -1;
 let dragEndSlotIdx = -1;
 let dragRoomId = "";
 const TIMELINE_TOUCH_Y_TOLERANCE = 36;
+const TIMELINE_LONG_PRESS_MS = 450;
+const TIMELINE_TOUCH_CANCEL_DISTANCE = 10;
+let timelineLongPressTimer = null;
+let pendingTimelineTouch = null;
 
 function renderTimelineMatrix() {
   const table = document.getElementById("timeline-matrix-table");
@@ -960,8 +964,7 @@ function renderTimelineMatrix() {
         });
         
         tdCell.addEventListener("touchstart", (e) => {
-          beginTimelineDragSelection(room.id, idx);
-          e.preventDefault();
+          scheduleTimelineLongPressSelection(e, room.id, idx);
         }, { passive: false });
         
         tdCell.addEventListener("touchmove", (e) => {
@@ -976,6 +979,31 @@ function renderTimelineMatrix() {
   });
   
   table.appendChild(tbody);
+}
+
+function scheduleTimelineLongPressSelection(e, roomId, slotIdx) {
+  const touch = e.touches[0];
+  if (!touch) return;
+  
+  clearTimelineLongPress();
+  pendingTimelineTouch = {
+    roomId,
+    slotIdx,
+    startX: touch.clientX,
+    startY: touch.clientY
+  };
+  
+  timelineLongPressTimer = setTimeout(() => {
+    if (!pendingTimelineTouch) return;
+    beginTimelineDragSelection(roomId, slotIdx);
+    pendingTimelineTouch = null;
+  }, TIMELINE_LONG_PRESS_MS);
+}
+
+function clearTimelineLongPress() {
+  clearTimeout(timelineLongPressTimer);
+  timelineLongPressTimer = null;
+  pendingTimelineTouch = null;
 }
 
 function beginTimelineDragSelection(roomId, slotIdx) {
@@ -996,11 +1024,22 @@ function beginTimelineDragSelection(roomId, slotIdx) {
 }
 
 function updateTimelineDragSelectionFromTouch(e) {
-  if (!isTimelineDragging || !dragRoomId) return;
-  e.preventDefault();
-  
   const touch = e.touches[0];
   if (!touch) return;
+  
+  if (!isTimelineDragging || !dragRoomId) {
+    if (pendingTimelineTouch) {
+      const deltaX = touch.clientX - pendingTimelineTouch.startX;
+      const deltaY = touch.clientY - pendingTimelineTouch.startY;
+      const movedDistance = Math.hypot(deltaX, deltaY);
+      if (movedDistance > TIMELINE_TOUCH_CANCEL_DISTANCE) {
+        clearTimelineLongPress();
+      }
+    }
+    return;
+  }
+  
+  e.preventDefault();
   
   const targetCell = getTimelineCellFromTouchPoint(touch.clientX, touch.clientY);
   if (!targetCell) return;
@@ -1552,6 +1591,7 @@ function setupEventListeners() {
     isDraggingSlots = false;
     lastTouchedSlotTime = "";
     touchDragAnchorSlotIdx = -1;
+    clearTimelineLongPress();
     if (isTimelineDragging) {
       isTimelineDragging = false;
       handleTimelineDragEnd();
@@ -1562,6 +1602,7 @@ function setupEventListeners() {
     isDraggingSlots = false;
     lastTouchedSlotTime = "";
     touchDragAnchorSlotIdx = -1;
+    clearTimelineLongPress();
     if (isTimelineDragging) {
       isTimelineDragging = false;
       dragRoomId = "";

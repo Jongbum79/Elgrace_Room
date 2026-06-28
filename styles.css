@@ -1321,7 +1321,7 @@ body.mobile-mode .matrix-selecting-tooltip {
 }
 
 body.mobile-mode .matrix-cell {
-  touch-action: none;
+  touch-action: pan-x pan-y;
 }
 
 body.mobile-mode #selected-date-badge {
