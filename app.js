@@ -1108,7 +1108,11 @@ function checkLogin() {
     // 모달 닫고 로그인 유도
     closeReservationModal();
     showToast("로그인이 필요한 서비스입니다.");
-    openMockLoginModal();
+    if (KAKAO_APP_KEY && window.Kakao) {
+      handleRealKakaoLogin();
+    } else {
+      openMockLoginModal();
+    }
     return false;
   }
   return true;
