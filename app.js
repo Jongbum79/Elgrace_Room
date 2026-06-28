@@ -528,6 +528,29 @@ function openReservationModal(room) {
     
     if (isBooked) {
       chip.classList.add("booked");
+      
+      // 예약 디테일 찾기
+      const activeRes = roomRes.find(res => {
+        const startIndex = TIME_SLOTS.indexOf(res.start_time);
+        const endIndex = TIME_SLOTS.indexOf(res.end_time);
+        const currentIndex = TIME_SLOTS.indexOf(time);
+        return currentIndex >= startIndex && currentIndex < endIndex;
+      });
+      
+      if (activeRes) {
+        chip.addEventListener("mouseenter", () => {
+          const tooltip = document.getElementById("modal-timeline-tooltip");
+          if (tooltip) {
+            tooltip.textContent = `${activeRes.reserved_by}: ${activeRes.title}`;
+            tooltip.classList.remove("hidden");
+            const leftPercent = (TIME_SLOTS.indexOf(time) + 0.5) / 24 * 100;
+            tooltip.style.left = `${leftPercent}%`;
+          }
+        });
+        chip.addEventListener("mouseleave", () => {
+          updateModalTimelineTooltip();
+        });
+      }
     } else {
       // 드래그/클릭 바인딩
       chip.addEventListener("mousedown", (e) => {
@@ -1223,6 +1246,14 @@ function setupEventListeners() {
       handleTimelineDragEnd();
     }
   });
+  
+  // 하단 타임라인 날짜 네비게이션 버튼 바인딩
+  document.getElementById("timeline-prev-day-btn").addEventListener("click", () => {
+    navigateDay(-1);
+  });
+  document.getElementById("timeline-next-day-btn").addEventListener("click", () => {
+    navigateDay(1);
+  });
 }
 
 function navigateMonth(offset) {
@@ -1244,6 +1275,22 @@ function navigateMonth(offset) {
   }
   
   selectDate(selectedDateStr);
+}
+
+function navigateDay(offset) {
+  const currentDate = new Date(selectedDateStr);
+  currentDate.setDate(currentDate.getDate() + offset);
+  
+  const newDateStr = formatDate(currentDate);
+  
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  if (year !== currentYear || month !== currentMonth) {
+    currentYear = year;
+    currentMonth = month;
+  }
+  
+  selectDate(newDateStr);
 }
 
 // 12. 공통 도우미 함수 (Cookie, Date 포맷 등)
